@@ -6,6 +6,7 @@ int main() {
     init("bin/test_disk.img");
 
     printf("\n********************\ncurrent dir: root\n");
+    create_dir("dir test");
 
     create_file("file_1_root.txt");
     create_file("file_2_root.txt");

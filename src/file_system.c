@@ -28,7 +28,7 @@ void sync_fs() {
     block is found.
 */
 int allocate_block() {
-    for (int i = 0; i < FILE_SIS_SIZE / BLOCK_SIZE; i++) {
+    for (int i = 1; i < MAX_BLOCKS; i++) {
         if (FAT[i] == FAT_FREE) {
             FAT[i] = MY_EOF;
             return i;
@@ -122,6 +122,10 @@ int create_file(const char *filename) {
         if (file_entries[i].first_block == FAT_FREE) {
             strcpy(file_entries[i].name, filename);
             file_entries[i].first_block = allocate_block();
+            if (file_entries[i].first_block == FAT_FREE) {
+                printf("Failed to allocate block for file '%s'\n", filename);
+                return -1;
+            }
             file_entries[i].size = 0;
             file_entries[i].is_directory = 0;
             file_entries[i].parent_index = current_dir_index;
