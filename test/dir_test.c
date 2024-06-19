@@ -40,5 +40,7 @@ int main() {
     printf("\n********************\ncurrent dir: root\n");
     ls_dir();
 
+    erase_disk();
+
     return 0;
 }

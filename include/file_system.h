@@ -31,6 +31,8 @@ void init(const char *name);
 */
 int allocate_block();
 
+void erase_disk();
+
 /*
     Creates a new file with the specified name. Returns the 
     index of the new file in the file entries, or -1 if no 

@@ -55,9 +55,30 @@ int allocate_block() {
     return -1;
 }
 
+void erase_disk() {
+    memset(FAT, FAT_FREE, FILE_SIS_SIZE / BLOCK_SIZE * sizeof(int));
+    memset(file_entries, 0, MAX_FILE * sizeof(FileEntry));
+
+    strcpy(file_entries[0].name, "/");
+    file_entries[0].is_directory = 1;
+    file_entries[0].first_block = MY_EOF;
+    file_entries[0].parent_index = -1;
+    file_entries[0].first_child = -1;
+    file_entries[0].next_sibling = -1;
+
+    sync_fs();
+}
+
 /* ===== FILE FUNCTION ===== */
 
 int create_file(const char *filename) {
+    for (int i = 0; i < MAX_FILE; i++) {
+        if (file_entries[i].parent_index == current_dir_index && strcmp(file_entries[i].name, filename) == 0) {
+            printf("File or directory '%s' already exists in the current directory.\n", filename);
+            return -1;
+        }
+    }
+
     for (int i = 0; i < MAX_FILE; i++) {
         if (file_entries[i].first_block == FAT_FREE) {
             strcpy(file_entries[i].name, filename);
@@ -81,6 +102,13 @@ int create_file(const char *filename) {
 /* ===== DIRECTORY FUNCTION ===== */
 
 int create_dir(const char *dirname) {
+    for (int i = 0; i < MAX_FILE; i++) {
+        if (file_entries[i].parent_index == current_dir_index && strcmp(file_entries[i].name, dirname) == 0) {
+            printf("File or directory '%s' already exists in the current directory.\n", dirname);
+            return -1;
+        }
+    }
+
     for (int i = 0; i < MAX_FILE; i++) {
         if (file_entries[i].first_block == FAT_FREE) {
             strcpy(file_entries[i].name, dirname);
