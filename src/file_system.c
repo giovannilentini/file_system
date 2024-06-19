@@ -13,7 +13,7 @@ FileEntry *file_entries;
 char *data_blocks;
 
 void init(const char *name) {
-    int fd = open("fs.img", O_RDWR | O_CREAT, 0600);
+    int fd = open(name, O_RDWR | O_CREAT, 0600);
     ftruncate(fd, FILE_SIS_SIZE);
 
     fs = mmap(NULL, FILE_SIS_SIZE, PROT_READ | PROT_WRITE, MAP_SHARED, fd, 0);
