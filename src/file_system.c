@@ -13,30 +13,7 @@ FileEntry *file_entries;
 char *data_blocks;
 int current_dir_index = 0;
 
-void init(const char *name) {
-    int fd = open(name, O_RDWR | O_CREAT, 0600);
-    ftruncate(fd, FILE_SIS_SIZE);
-
-    fs = mmap(NULL, FILE_SIS_SIZE, PROT_READ | PROT_WRITE, MAP_SHARED, fd, 0);
-    close(fd);
-
-    FAT = (int*) fs;
-    file_entries = (FileEntry*) (FAT + (FILE_SIS_SIZE / BLOCK_SIZE));
-    data_blocks = (char*) (file_entries + MAX_FILE);
-
-    memset(FAT, FAT_FREE, FILE_SIS_SIZE / BLOCK_SIZE * sizeof(int));
-    memset(file_entries, 0, MAX_FILE * sizeof(FileEntry));
-
-    strcpy(file_entries[0].name, "/");
-    file_entries[0].is_directory = 1;
-    file_entries[0].first_block = MY_EOF;
-    file_entries[0].parent_index = -1;
-    file_entries[0].first_child = -1;
-    file_entries[0].next_sibling = -1;
-
-    msync(fs, FILE_SIS_SIZE, MS_SYNC);
-
-}
+/* ===== HANDLE FUNCTION ===== */
 
 /*
     Syncronize the changes in the disk image.
@@ -45,6 +22,11 @@ void sync_fs() {
     msync(fs, FILE_SIS_SIZE, MS_SYNC);
 }
 
+/*
+    Allocates a free block in the FAT and marks it as EOF.
+    Return the index of the allocated block, or -1 if no free 
+    block is found.
+*/
 int allocate_block() {
     for (int i = 0; i < FILE_SIS_SIZE / BLOCK_SIZE; i++) {
         if (FAT[i] == FAT_FREE) {
@@ -53,6 +35,63 @@ int allocate_block() {
         }
     }
     return -1;
+}
+
+int find_file_index(const char *name) {
+    for (int i = 0; i < MAX_FILE; i++) {
+        if (file_entries[i].parent_index == current_dir_index && strcmp(file_entries[i].name, name) == 0) {
+            return i;
+        }
+    }
+    printf("File '%s' not found in the current directory.\n", name);
+    return -1;
+}
+
+/* ===== DISK FUNCTION ===== */
+
+void init(const char *name) {
+    int fd = open(name, O_RDWR | O_CREAT, 0666);
+    if (fd == -1) {
+        perror("open");
+        exit(1);
+    }
+
+    ftruncate(fd, FILE_SIS_SIZE);
+
+    fs = mmap(NULL, FILE_SIS_SIZE, PROT_READ | PROT_WRITE, MAP_SHARED, fd, 0);
+    if (fs == MAP_FAILED) {
+        perror("mmap");
+        close(fd);
+        exit(1);
+    }
+    close(fd);
+
+    FAT = (int*) fs;
+    file_entries = (FileEntry*) (FAT + (FILE_SIS_SIZE / BLOCK_SIZE));
+    data_blocks = (char*) (file_entries + MAX_FILE);
+
+    if (file_entries[0].first_block == FAT_FREE) {
+        strcpy(file_entries[0].name, "/");
+        file_entries[0].first_block = MY_EOF;
+        file_entries[0].size = 0;
+        file_entries[0].is_directory = 1;
+        file_entries[0].parent_index = -1;
+        file_entries[0].first_child = -1;
+        file_entries[0].next_sibling = -1;
+
+        for (int i = 1; i < MAX_FILE; i++) {
+            file_entries[i].first_block = FAT_FREE;
+        }
+        for (int i = 0; i < MAX_BLOCKS; i++) {
+            FAT[i] = FAT_FREE;
+        }
+
+        current_dir_index = 0;
+        sync_fs();
+    } else {
+        current_dir_index = 0;
+    }
+
 }
 
 void erase_disk() {
@@ -90,13 +129,70 @@ int create_file(const char *filename) {
             file_entries[current_dir_index].first_child = i;
             file_entries[i].next_sibling = file_entries[current_dir_index].first_child;
             
-
             sync_fs();
             return i;
         }
     }
     printf("Maximum number of files reached.\n");
     return -1;
+}
+
+int write_file(const char *filename, const char *buffer, int size) {
+    printf("write: ");
+    int file_index = find_file_index(filename);
+    if (file_index == -1) {
+        return -1;
+    }
+
+    int current_block = file_entries[file_index].first_block;
+    int remaining_size = size;
+    int offset = 0;
+
+    while (remaining_size > 0) {
+        int to_write = (remaining_size < BLOCK_SIZE) ? remaining_size : BLOCK_SIZE;
+        memcpy(data_blocks + current_block * BLOCK_SIZE, buffer + offset, to_write);
+        remaining_size -= to_write;
+        offset += to_write;
+
+        if (remaining_size > 0) {
+            if (FAT[current_block] == MY_EOF) {
+                int new_block = allocate_block();
+                if (new_block == -1) {
+                    printf("No more blocks available.\n");
+                    return -1;
+                }
+                FAT[current_block] = new_block;
+                FAT[new_block] = MY_EOF;
+            }
+            current_block = FAT[current_block];
+        }
+    }
+    file_entries[file_index].size += size;
+
+    sync_fs();
+    return size;
+}
+
+int read_file(const char *filename, char *buffer, int size) {
+    int file_index = find_file_index(filename);
+    if (file_index == -1) {
+        return -1;
+    }
+
+    int current_block = file_entries[file_index].first_block;
+    int remaining_size = size;
+    int offset = 0;
+
+    while (remaining_size > 0 && current_block != MY_EOF) {
+        int to_read = (remaining_size < BLOCK_SIZE) ? remaining_size : BLOCK_SIZE;
+        memcpy(buffer + offset, data_blocks + current_block * BLOCK_SIZE, to_read);
+        remaining_size -= to_read;
+        offset += to_read;
+        current_block = FAT[current_block];
+    }
+
+    sync_fs();
+    return offset;
 }
 
 /* ===== DIRECTORY FUNCTION ===== */

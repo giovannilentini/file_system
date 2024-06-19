@@ -1,7 +1,12 @@
 #pragma once
 
+#ifndef MIN
+#define MIN(a, b) ((a) < (b) ? (a) : (b))
+#endif
+
 #define FILE_SIS_SIZE 1024 * 1024
 #define BLOCK_SIZE 512
+#define MAX_BLOCKS 1024
 #define MAX_FILE 128 
 #define FAT_FREE 0
 #define MY_EOF -1
@@ -24,13 +29,6 @@ typedef struct {
 */
 void init(const char *name);
 
-/*
-    Allocates a free block in the FAT and marks it as EOF.
-    Return the index of the allocated block, or -1 if no free 
-    block is found.
-*/
-int allocate_block();
-
 void erase_disk();
 
 /*
@@ -41,6 +39,25 @@ void erase_disk();
     filename: The name of the file to create.
 */
 int create_file(const char *filename);
+
+/*
+    Writes data to a file, potentially extending its size. Returns
+    the number of bytes written.
+
+    filename: The name of the file to write to;
+    buffer: The buffer containing the data to write;
+    size: The size of the data to write.
+*/
+int write_file(const char *filename, const char *buffer, int size);
+
+/*
+    Reads data from a file. Returns the number of bytes read.
+
+    filename: The name of the file to read from;
+    buffer:  The buffer to store the read data;
+    size: The size of the data to read.
+*/
+int read_file(const char *filename, char *buffer, int size);
 
 /*
     Creates a new directory with the specified name. Returns the
