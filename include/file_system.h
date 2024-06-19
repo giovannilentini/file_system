@@ -60,6 +60,13 @@ int write_file(const char *filename, const char *buffer, int size);
 int read_file(const char *filename, char *buffer, int size);
 
 /*
+    Erases a file or an empty dir by freeing its blocks in the FAT and clearing is entry.
+
+    filename: name of the file or directory to delete.
+*/
+void erase_file(const char *filename);
+
+/*
     Creates a new directory with the specified name. Returns the
     index of the new directory in the file entries, or -1 if no free 
     directory entry is found.

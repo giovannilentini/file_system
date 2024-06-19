@@ -43,7 +43,7 @@ int find_file_index(const char *name) {
             return i;
         }
     }
-    printf("File '%s' not found in the current directory.\n", name);
+    printf("File or Directory '%s' not found in the current directory.\n", name);
     return -1;
 }
 
@@ -142,7 +142,6 @@ int create_file(const char *filename) {
 }
 
 int write_file(const char *filename, const char *buffer, int size) {
-    printf("write: ");
     int file_index = find_file_index(filename);
     if (file_index == -1) {
         return -1;
@@ -199,6 +198,35 @@ int read_file(const char *filename, char *buffer, int size) {
     return offset;
 }
 
+void erase_file(const char *filename) {
+    int file_index = find_file_index(filename);
+    if (file_index == -1) {
+        return;
+    }
+
+    if (file_entries[file_index].is_directory) {
+        if (file_entries[file_index].first_child != -1) {
+            printf("Directory '%s' is not empty.\n", file_entries[file_index].name);
+            return;
+        }
+    } else {
+
+        int current_block = file_entries[file_index].first_block;
+        while (current_block != MY_EOF) {
+            int next_block = FAT[current_block];
+            FAT[current_block] = FAT_FREE;
+            current_block = next_block;
+        }
+    }
+
+    file_entries[file_index].first_block = FAT_FREE;
+    file_entries[file_index].name[0] = '\0';
+    file_entries[file_index].first_child = -1;
+    file_entries[file_index].next_sibling = -1;
+
+    sync_fs();
+}
+
 /* ===== DIRECTORY FUNCTION ===== */
 
 int create_dir(const char *dirname) {
@@ -231,20 +259,32 @@ int create_dir(const char *dirname) {
 
 int change_dir(const char *dirname) {
     if (strcmp(dirname, "..") == 0) {
-        if (file_entries[current_dir_index].parent_index != -1) {
+        if (current_dir_index == 0) {
+            printf("Already at root directory.\n");
+            return -1;
+        } else if (file_entries[current_dir_index].parent_index != -1) {
             current_dir_index = file_entries[current_dir_index].parent_index;
             return 0;
+        } else {
+            printf("Cannot move up from current directory.\n");
+            return -1;
         }
         return -1;
     } else {
-        for (int i = file_entries[current_dir_index].first_child; i != -1; i = file_entries[i].next_sibling) {
-            if (file_entries[i].is_directory && strcmp(file_entries[i].name, dirname) == 0) {
+        int found = 0;
+        for (int i = 0; i < MAX_FILE; i++) {
+            if (file_entries[i].parent_index == current_dir_index && file_entries[i].is_directory && strcmp(file_entries[i].name, dirname) == 0) {
                 current_dir_index = i;
-                return 0;
+                found = 1;
+                break;
             }
         }
-        printf("Directory '%s' not found in current directory.\n", dirname);
-        return -1;
+        if (!found) {
+            printf("Directory '%s' not found in current directory.\n", dirname);
+            return -1;
+        }
+        
+        return 0;
     }
 }
 
