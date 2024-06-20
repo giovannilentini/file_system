@@ -88,3 +88,12 @@ int change_dir(const char *path);
     Lists the file and directories in the current directory.
 */
 void ls_dir();
+
+/*
+    Deletes a directory and all its contents recursively. If the 
+    directory contains other directories, they are deleted along 
+    with their contents.
+
+    dirname: name of the direcorty to delete.
+*/
+int erase_dir_recursive(const char *dirname);

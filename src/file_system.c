@@ -209,20 +209,22 @@ void erase_file(const char *filename) {
             printf("Directory '%s' is not empty.\n", file_entries[file_index].name);
             return;
         }
-    } else {
+    }
 
-        int current_block = file_entries[file_index].first_block;
-        while (current_block != MY_EOF) {
-            int next_block = FAT[current_block];
-            FAT[current_block] = FAT_FREE;
-            current_block = next_block;
-        }
+    int current_block = file_entries[file_index].first_block;
+    while (current_block != MY_EOF) {
+        int next_block = FAT[current_block];
+        FAT[current_block] = FAT_FREE;
+        current_block = next_block;
     }
 
     file_entries[file_index].first_block = FAT_FREE;
+    memset(file_entries[file_index].name, 0, 64);
     file_entries[file_index].name[0] = '\0';
     file_entries[file_index].first_child = -1;
     file_entries[file_index].next_sibling = -1;
+    file_entries[file_index].is_directory = 0;
+    file_entries[file_index].parent_index = -1;
 
     sync_fs();
 }
@@ -299,4 +301,61 @@ void ls_dir() {
             }
         }
     }
+}
+
+int erase_handle(const char *name) {
+    int file_index = find_file_index(name);
+    if (file_index == -1) {
+        return -1;
+    }
+
+    int block_index = file_entries[file_index].first_block;
+    while (block_index != -1) {
+        int next_block = FAT[block_index];
+        FAT[block_index] = FAT_FREE;
+        block_index = next_block;
+    }
+
+    file_entries[file_index].parent_index = -1;
+    file_entries[file_index].is_directory = 0;
+    strcpy(file_entries[file_index].name, "");
+    file_entries[file_index].first_child = -1;
+    file_entries[file_index].first_block = -1;
+    file_entries[file_index].next_sibling = -1;
+    return 0;
+}
+
+int erase_dir_recursive(const char *dirname) {
+    int dir_index = find_file_index(dirname);
+    if (dir_index == -1) {
+        return -1;
+    }
+
+    if (!file_entries[dir_index].is_directory) {
+        printf("'%s' is not a directory.\n", dirname);
+        return -1;
+    }
+
+    int original_dir_index = current_dir_index;
+
+    if (change_dir(dirname) != 0) {
+        return -1;
+    }
+
+    int child_index = file_entries[dir_index].first_child;
+    while (child_index != -1) {
+        if (file_entries[child_index].is_directory) {
+            erase_dir_recursive(file_entries[child_index].name);
+        } else {
+            erase_handle(file_entries[child_index].name);
+        }
+        child_index = file_entries[child_index].next_sibling;
+    }
+
+    current_dir_index = original_dir_index;
+
+    erase_handle(dirname);
+    sync_fs();
+
+    return 0;
 }
