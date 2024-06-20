@@ -78,6 +78,7 @@ void init(const char *name) {
         file_entries[0].parent_index = -1;
         file_entries[0].first_child = -1;
         file_entries[0].next_sibling = -1;
+        file_entries[0].current_position = 0;
 
         for (int i = 1; i < MAX_FILE; i++) {
             file_entries[i].first_block = FAT_FREE;
@@ -87,6 +88,9 @@ void init(const char *name) {
         }
 
         current_dir_index = 0;
+
+        create_file("test.txt");
+        erase_file("test.txt");
         sync_fs();
     } else {
         current_dir_index = 0;
@@ -104,6 +108,7 @@ void erase_disk() {
     file_entries[0].parent_index = -1;
     file_entries[0].first_child = -1;
     file_entries[0].next_sibling = -1;
+    file_entries[0].current_position = 0;
 
     sync_fs();
 }
@@ -132,6 +137,7 @@ int create_file(const char *filename) {
             file_entries[i].first_child = -1;
             file_entries[current_dir_index].first_child = i;
             file_entries[i].next_sibling = file_entries[current_dir_index].first_child;
+            file_entries[i].current_position = 0;
             
             sync_fs();
             return i;
@@ -147,15 +153,35 @@ int write_file(const char *filename, const char *buffer, int size) {
         return -1;
     }
 
-    int current_block = file_entries[file_index].first_block;
+    FileEntry *file = &file_entries[file_index];
+    int current_block = file->first_block;
     int remaining_size = size;
     int offset = 0;
+    int current_position = file->current_position;
+
+    while (current_position >= BLOCK_SIZE) {
+        if (FAT[current_block] == MY_EOF) {
+            int new_block = allocate_block();
+            if (new_block == -1) {
+                printf("No more blocks available.\n");
+                return -1;
+            }
+            FAT[current_block] = new_block;
+            FAT[new_block] = MY_EOF;
+        }
+        current_block = FAT[current_block];
+        current_position -= BLOCK_SIZE;
+    }
 
     while (remaining_size > 0) {
-        int to_write = (remaining_size < BLOCK_SIZE) ? remaining_size : BLOCK_SIZE;
-        memcpy(data_blocks + current_block * BLOCK_SIZE, buffer + offset, to_write);
+        int pos_in_block = current_position % BLOCK_SIZE;
+        int to_write = (remaining_size < (BLOCK_SIZE - pos_in_block)) ? remaining_size : (BLOCK_SIZE - pos_in_block);
+
+        memcpy(data_blocks + current_block * BLOCK_SIZE + pos_in_block, buffer + offset, to_write);
+
         remaining_size -= to_write;
         offset += to_write;
+        current_position += to_write;
 
         if (remaining_size > 0) {
             if (FAT[current_block] == MY_EOF) {
@@ -168,34 +194,73 @@ int write_file(const char *filename, const char *buffer, int size) {
                 FAT[new_block] = MY_EOF;
             }
             current_block = FAT[current_block];
+            current_position = 0;
         }
     }
-    file_entries[file_index].size += size;
+
+    if (file->current_position + size > file->size) {
+        file->size = file->current_position + size;
+    }
 
     sync_fs();
     return size;
 }
 
 int read_file(const char *filename, char *buffer, int size) {
+     int file_index = find_file_index(filename);
+    if (file_index == -1) {
+        return -1;
+    }
+
+    FileEntry *file = &file_entries[file_index];
+    int current_block = file->first_block;
+    int remaining_size = size;
+    int offset = 0;
+    int current_position = file->current_position;
+
+    while (current_position >= BLOCK_SIZE) {
+        if (FAT[current_block] == MY_EOF) {
+            printf("Reached EOF while seeking to current position.\n");
+            return -1;
+        }
+        current_block = FAT[current_block];
+        current_position -= BLOCK_SIZE;
+    }
+
+    while (remaining_size > 0 && current_block != MY_EOF) {
+        int pos_in_block = current_position % BLOCK_SIZE;
+        int to_read = (remaining_size < (BLOCK_SIZE - pos_in_block)) ? remaining_size : (BLOCK_SIZE - pos_in_block);
+
+        memcpy(buffer + offset, data_blocks + current_block * BLOCK_SIZE + pos_in_block, to_read);
+
+        remaining_size -= to_read;
+        offset += to_read;
+        current_position += to_read;
+
+        if (remaining_size > 0) {
+            current_block = FAT[current_block];
+            current_position = 0;
+        }
+    }
+
+    sync_fs();
+    return offset;
+
+}
+
+int seek(const char *filename, int position) {
     int file_index = find_file_index(filename);
     if (file_index == -1) {
         return -1;
     }
 
-    int current_block = file_entries[file_index].first_block;
-    int remaining_size = size;
-    int offset = 0;
-
-    while (remaining_size > 0 && current_block != MY_EOF) {
-        int to_read = (remaining_size < BLOCK_SIZE) ? remaining_size : BLOCK_SIZE;
-        memcpy(buffer + offset, data_blocks + current_block * BLOCK_SIZE, to_read);
-        remaining_size -= to_read;
-        offset += to_read;
-        current_block = FAT[current_block];
+    if (position < 0 || position > file_entries[file_index].size) {
+        printf("Invalid seek position.\n");
+        return -1;
     }
 
-    sync_fs();
-    return offset;
+    file_entries[file_index].current_position = position;
+    return 0;
 }
 
 void erase_file(const char *filename) {
@@ -225,6 +290,7 @@ void erase_file(const char *filename) {
     file_entries[file_index].next_sibling = -1;
     file_entries[file_index].is_directory = 0;
     file_entries[file_index].parent_index = -1;
+    file_entries[file_index].current_position = 0;
 
     sync_fs();
 }
@@ -322,6 +388,7 @@ int erase_handle(const char *name) {
     file_entries[file_index].first_child = -1;
     file_entries[file_index].first_block = -1;
     file_entries[file_index].next_sibling = -1;
+    file_entries[file_index].current_position = 0;
     return 0;
 }
 

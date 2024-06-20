@@ -44,7 +44,7 @@ int main() {
     change_dir("..");
     change_dir("nonexistentdir");
     change_dir("dir 1_1");
-    printf("********************\n");
+    printf("********************\n\n");
     
     return 0;
 }

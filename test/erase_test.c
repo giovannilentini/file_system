@@ -53,7 +53,7 @@ int main() {
     erase_dir_recursive("full_dir");
     printf("\nls after delete 'full_dir'\n\n");
     ls_dir();
-    printf("********************\n");
+    printf("********************\n\n");
 
     //change_dir("full_dir");
     //change_dir("full_dir_2");

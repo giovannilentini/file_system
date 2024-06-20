@@ -19,6 +19,7 @@ typedef struct {
     int parent_index;
     int first_child;
     int next_sibling;
+    int current_position;
 } FileEntry;
 
 /*
@@ -58,6 +59,15 @@ int write_file(const char *filename, const char *buffer, int size);
     size: The size of the data to read.
 */
 int read_file(const char *filename, char *buffer, int size);
+
+/*
+    Sets the position in a file handle for subsequent read/write 
+    operations.
+
+    handle: The file handle to set the position in.
+    position: The position to seek to.
+*/
+int seek(const char *filename, int offset);
 
 /*
     Erases a file or an empty dir by freeing its blocks in the FAT and clearing is entry.
