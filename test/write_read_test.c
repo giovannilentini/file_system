@@ -5,7 +5,7 @@
 int main() {
     init("bin/test_disk.img");
     char buf[5] = {0};
-    char buf2[7] = {0};
+    char buf2[40] = {0};
     char buf3[6] = {0};
 
     printf("\n********************\ncurrent dir: root\n\n");
@@ -26,7 +26,7 @@ int main() {
     printf("read from file '/file_2_root.txt' = %s\n", buf3);
     
     write_file("file_1_root.txt", "gggggg", 6);
-    read_file("file_1_root.txt", buf2, 6);
+    read_file("file_1_root.txt", buf2, 40);
     printf("read from file '/file_1_root.txt' = %s\n", buf2);
     printf("********************\n");
 

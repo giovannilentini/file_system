@@ -138,6 +138,7 @@ int create_file(const char *filename) {
             file_entries[current_dir_index].first_child = i;
             file_entries[i].next_sibling = file_entries[current_dir_index].first_child;
             file_entries[i].current_position = 0;
+            file_entries[i].chars_write = 0;
             
             sync_fs();
             return i;
@@ -154,6 +155,7 @@ int write_file(const char *filename, const char *buffer, int size) {
     }
 
     FileEntry *file = &file_entries[file_index];
+    file->chars_write = file->current_position + size;
     int current_block = file->first_block;
     int remaining_size = size;
     int offset = 0;
@@ -207,14 +209,14 @@ int write_file(const char *filename, const char *buffer, int size) {
 }
 
 int read_file(const char *filename, char *buffer, int size) {
-     int file_index = find_file_index(filename);
+    int file_index = find_file_index(filename);
     if (file_index == -1) {
         return -1;
     }
 
     FileEntry *file = &file_entries[file_index];
     int current_block = file->first_block;
-    int remaining_size = size;
+    int remaining_size = file->chars_write < size? file->chars_write : size;
     int offset = 0;
     int current_position = file->current_position;
 
@@ -291,6 +293,7 @@ void erase_file(const char *filename) {
     file_entries[file_index].is_directory = 0;
     file_entries[file_index].parent_index = -1;
     file_entries[file_index].current_position = 0;
+    file_entries[file_index].chars_write = 0;
 
     sync_fs();
 }
@@ -315,6 +318,7 @@ int create_dir(const char *dirname) {
             file_entries[i].first_child = -1;
             file_entries[i].next_sibling = file_entries[current_dir_index].first_child;
             file_entries[current_dir_index].first_child = i;
+            file_entries[i].current_position = 0;
             
             sync_fs();
             return i;
@@ -389,6 +393,7 @@ int erase_handle(const char *name) {
     file_entries[file_index].first_block = -1;
     file_entries[file_index].next_sibling = -1;
     file_entries[file_index].current_position = 0;
+    file_entries[file_index].chars_write = 0;
     return 0;
 }
 

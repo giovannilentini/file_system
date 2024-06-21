@@ -20,6 +20,7 @@ typedef struct {
     int first_child;
     int next_sibling;
     int current_position;
+    int chars_write;
 } FileEntry;
 
 /*
@@ -64,7 +65,7 @@ int read_file(const char *filename, char *buffer, int size);
     Sets the position in a file handle for subsequent read/write 
     operations.
 
-    handle: The file handle to set the position in.
+    filename: The name of the file to set the position in.
     position: The position to seek to.
 */
 int seek(const char *filename, int offset);
