@@ -10,7 +10,8 @@ char command[MAX_COMMAND_LEN];
 void format(int argc, char* argv[MAX_ARGC + 1]) {
 
     if (argc != 1) {
-        printf("format error: wrong number of parameters.\n");
+        printf("Error: wrong number of parameters.\n");
+        printf("Usage: format\n");
         return;
     }
 
@@ -21,7 +22,8 @@ void format(int argc, char* argv[MAX_ARGC + 1]) {
 void touch(int argc, char* argv[MAX_ARGC + 1]) {
 
     if (argc != 2) {
-        printf("touch error: wrong number of parameters.\n");
+        printf("Error: wrong number of parameters.\n");
+        printf("Usage: touch <filename>\n");
         return;
     }
 
@@ -31,7 +33,8 @@ void touch(int argc, char* argv[MAX_ARGC + 1]) {
 void mkdir(int argc, char* argv[MAX_ARGC + 1]) {
 
     if (argc != 2) {
-        printf("mkdir error: wrong number of parameters.\n");
+        printf("Error: wrong number of parameters.\n");
+        printf("Usage: mkdir <dirname>\n");
         return;
     }
 
@@ -41,7 +44,8 @@ void mkdir(int argc, char* argv[MAX_ARGC + 1]) {
 void rm(int argc, char* argv[MAX_ARGC + 1]) {
 
     if (argc != 2) {
-        printf("rm error: wrong number of parameters.\n");
+        printf("Error: wrong number of parameters.\n");
+        printf("Usage: rm <filename>\n");
         return;
     }
 
@@ -51,7 +55,8 @@ void rm(int argc, char* argv[MAX_ARGC + 1]) {
 void rmrf(int argc, char* argv[MAX_ARGC + 1]) {
 
     if (argc != 2) {
-        printf("rmrf error: wrong number of parameters.\n");
+        printf("Error: wrong number of parameters.\n");
+        printf("Usage: rmrf <dirname>\n");
         return;
     }
 
@@ -61,7 +66,8 @@ void rmrf(int argc, char* argv[MAX_ARGC + 1]) {
 void ls(int argc, char* argv[MAX_ARGC + 1]) {
 
     if (argc != 1) {
-        printf("ls error: wrong number of parameters.\n");
+        printf("Error: wrong number of parameters.\n");
+        printf("Usage: ls\n");
         return;
     }
 
@@ -71,7 +77,8 @@ void ls(int argc, char* argv[MAX_ARGC + 1]) {
 void cd(int argc, char* argv[MAX_ARGC + 1]) {
 
     if (argc != 2) {
-        printf("cd error: wrong number of parameters.\n");
+        printf("Error: wrong number of parameters.\n");
+        printf("Usage: cd <dirname>\n");
         return;
     }
 
@@ -81,7 +88,13 @@ void cd(int argc, char* argv[MAX_ARGC + 1]) {
 void write(int argc, char* argv[MAX_ARGC + 1]) {
 
     if (argc != 2) {
-        printf("write error: wrong number of parameters.\n");
+        printf("Error: wrong number of parameters.\n");
+        printf("Usage: write <filename>\n");
+        return;
+    }
+
+    if ( get_fcb(find_file_index(argv[1])).is_directory ) {
+        printf("Error: cannot write a directory.\n");
         return;
     }
 
@@ -105,7 +118,13 @@ void write(int argc, char* argv[MAX_ARGC + 1]) {
 void read(int argc, char* argv[MAX_ARGC + 1]) {
 
     if (argc != 2) {
-        printf("read error: wrong number of parameters \n");
+        printf("Error: wrong number of parameters \n");
+        printf("Usage: read <filename>\n");
+        return;
+    }
+
+    if ( get_fcb(find_file_index(argv[1])).is_directory ) {
+        printf("Error: cannot write a directory.\n");
         return;
     }
 
@@ -125,12 +144,79 @@ void read(int argc, char* argv[MAX_ARGC + 1]) {
     
 }
 
+void clear(int argc, char* argv[MAX_ARGC + 1]) {
+    if (argc != 1) {
+        printf("Error: wrong number of parameters.\n");
+        printf("Usage: clear\n");
+        return;
+    }
+
+    system("clear");
+    
+}
+
+void help(int argc, char* argv[MAX_ARGC + 1]) {
+
+    if (argc != 1) {
+        printf("Error: wrong number of parameters \n");
+        printf("Usage: help\n");
+        return;
+    }
+
+    printf("Available commands:\n\n");
+
+    printf("1. format\n");
+    printf("   Usage: format\n");
+    printf("   Description: Formats the disk.\n\n");
+
+    printf("2. touch\n");
+    printf("   Usage: touch <filename>\n");
+    printf("   Description: Creates a new file with the specified name.\n\n");
+
+    printf("3. mkdir\n");
+    printf("   Usage: mkdir <dirname>\n");
+    printf("   Description: Creates a new directory with the specified name.\n\n");
+
+    printf("4. rm\n");
+    printf("   Usage: rm <filename>\n");
+    printf("   Description: Removes the specified file.\n\n");
+
+    printf("5. rmrf\n");
+    printf("   Usage: rmrf <dirname>\n");
+    printf("   Description: Recursively removes the specified directory and its contents.\n\n");
+
+    printf("6. ls\n");
+    printf("   Usage: ls\n");
+    printf("   Description: Lists the contents of the current directory.\n\n");
+
+    printf("7. cd\n");
+    printf("   Usage: cd <dirname>\n");
+    printf("   Description: Changes the current directory to the specified directory.\n\n");
+
+    printf("8. write\n");
+    printf("   Usage: write <filename>\n");
+    printf("   Description: Writes to the specified file starting at a specified position.\n\n");
+
+    printf("9. read\n");
+    printf("   Usage: read <filename>\n");
+    printf("   Description: Reads from the specified file starting at a specified position.\n\n");
+
+    printf("10. clear\n");
+    printf("    Usage: clear\n");
+    printf("    Description: Clears the terminal screen.\n\n");
+
+    printf("11. help\n");
+    printf("    Usage: help\n");
+    printf("    Description: Displays this help message.\n\n");
+}
+
+
 void do_command() {
 
     while (1) {
         
         char* argv[MAX_ARGC+1];
-        FileEntry current_dir_fcb = get_fcb();
+        FileEntry current_dir_fcb = get_fcb(get_current_dir());
         printf("%s> ", current_dir_fcb.name);
         fgets(command, 128, stdin);
         
@@ -161,11 +247,16 @@ void do_command() {
             write(argc, argv);
         } else if (strcmp(argv[0], "read") == 0) {
             read(argc, argv);
-        } else if (strcmp(argv[0], "exit") == 0 || strcmp(argv[0], "quit") == 0) {
+        } else if (strcmp(argv[0], "clear") == 0) {
+            clear(argc, argv);
+            continue;
+        } else if (strcmp(argv[0], "help") == 0) {
+            help(argc, argv);
+        }  else if (strcmp(argv[0], "exit") == 0 || strcmp(argv[0], "quit") == 0) {
             exit(EXIT_SUCCESS);
         } else {
-            printf("erroreeee\n");
+            printf("Error: %s command not found\n", command);
         }
     }
     
-} 
+}

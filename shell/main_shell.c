@@ -6,5 +6,6 @@
 int main() {
     init("shell/shell_disk.img");
 
+    printf("Welcome, run 'help' to see available commands!\n");
     do_command();
 }

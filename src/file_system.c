@@ -115,7 +115,7 @@ void erase_disk() {
 
 int get_current_dir() { return current_dir_index; }
 
-FileEntry get_fcb() { return file_entries[current_dir_index]; }
+FileEntry get_fcb(int file_index) { return file_entries[file_index]; }
 
 /* ===== FILE FUNCTION ===== */
 
@@ -158,6 +158,12 @@ int write_file(const char *filename, const char *buffer, int size) {
     }
 
     FileEntry *file = &file_entries[file_index];
+
+    if (file->is_directory) {
+        printf("Error: cannot write a directory.\n");
+        return -1;
+    }
+
     file->size = file->current_position + size;
     int current_block = file->first_block;
     int remaining_size = size;
@@ -214,6 +220,12 @@ int read_file(const char *filename, char *buffer, int size) {
     }
 
     FileEntry *file = &file_entries[file_index];
+
+    if (file->is_directory) {
+        printf("Error: cannot write a directory.\n");
+        return -1;
+    }
+
     int current_block = file->first_block;
     int remaining_size = file->size < size ? file->size : size;
     int offset = 0;
