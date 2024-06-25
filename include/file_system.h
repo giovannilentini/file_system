@@ -7,7 +7,7 @@
 #define FILE_SIS_SIZE 1024 * 1024
 #define BLOCK_SIZE 512
 #define MAX_BLOCKS FILE_SIS_SIZE/BLOCK_SIZE
-#define MAX_FILE 128 
+#define MAX_FILE 256
 #define FAT_FREE 0
 #define MY_EOF -1
 
