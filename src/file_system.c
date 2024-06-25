@@ -43,7 +43,7 @@ int find_file_index(const char *name) {
             return i;
         }
     }
-    printf("File or Directory '%s' not found in the current directory.\n", name);
+    printf("Error: File or Directory '%s' not found in the current directory.\n", name);
     return -1;
 }
 
@@ -52,7 +52,7 @@ int find_file_index(const char *name) {
 void init(const char *name) {
     int fd = open(name, O_RDWR | O_CREAT, 0666);
     if (fd == -1) {
-        printf("Error: cannot open the file in the init function\n");
+        printf("Error: Cannot open the file in the init function\n");
         exit(1);
     }
 
@@ -60,7 +60,7 @@ void init(const char *name) {
 
     fs = mmap(NULL, FILE_SIS_SIZE, PROT_READ | PROT_WRITE, MAP_SHARED, fd, 0);
     if (fs == MAP_FAILED) {
-        printf("Error: cannot map the file in the init function\n");
+        printf("Error: Cannot map the file in the init function\n");
         close(fd);
         exit(1);
     }
@@ -122,7 +122,7 @@ FileEntry get_fcb() { return file_entries[current_dir_index]; }
 int create_file(const char *filename) {
     for (int i = 0; i < MAX_FILE; i++) {
         if (file_entries[i].parent_index == current_dir_index && strcmp(file_entries[i].name, filename) == 0) {
-            printf("Error: file or directory '%s' already exists in the current directory.\n", filename);
+            printf("Error: File or Directory '%s' already exists in the current directory.\n", filename);
             return -1;
         }
     }
@@ -132,7 +132,7 @@ int create_file(const char *filename) {
             strcpy(file_entries[i].name, filename);
             file_entries[i].first_block = allocate_block();
             if (file_entries[i].first_block == FAT_FREE) {
-                printf("Error: failed to allocate block for file '%s'\n", filename);
+                printf("Error: Failed to allocate block for file '%s'\n", filename);
                 return -1;
             }
             file_entries[i].size = 0;
@@ -147,7 +147,7 @@ int create_file(const char *filename) {
             return i;
         }
     }
-    printf("Error: maximum number of files reached.\n");
+    printf("Error: Maximum number of files reached.\n");
     return -1;
 }
 
@@ -255,7 +255,7 @@ int seek(const char *filename, int position) {
     }
 
     if (position < 0 || position > file_entries[file_index].size) {
-        printf("Error: invalid seek position.\n");
+        printf("Error: Invalid seek position.\n");
         return -1;
     }
 
@@ -271,7 +271,7 @@ void erase_file(const char *filename) {
 
     if (file_entries[file_index].is_directory) {
         if (file_entries[file_index].first_child != -1) {
-            printf("Error: directory '%s' is not empty.\n", file_entries[file_index].name);
+            printf("Error: Directory '%s' is not empty.\n", file_entries[file_index].name);
             return;
         }
     }
@@ -300,7 +300,7 @@ void erase_file(const char *filename) {
 int create_dir(const char *dirname) {
     for (int i = 0; i < MAX_FILE; i++) {
         if (file_entries[i].parent_index == current_dir_index && strcmp(file_entries[i].name, dirname) == 0) {
-            printf("Error: file or directory '%s' already exists in the current directory.\n", dirname);
+            printf("Error: File or Directory '%s' already exists in the current directory.\n", dirname);
             return -1;
         }
     }
@@ -322,7 +322,7 @@ int create_dir(const char *dirname) {
         }
     }
 
-    printf("Maximum number of directories reached.\n");
+    printf("Error: Maximum number of directories reached.\n");
     return -1;
 }
 
@@ -335,7 +335,7 @@ int change_dir(const char *dirname) {
             current_dir_index = file_entries[current_dir_index].parent_index;
             return 0;
         } else {
-            printf("Error: cannot move up from current directory.\n");
+            printf("Error: Cannot move up from current directory.\n");
             return -1;
         }
         return -1;
@@ -349,12 +349,16 @@ int change_dir(const char *dirname) {
             }
         }
         if (!found) {
-            printf("Error: directory '%s' not found in current directory.\n", dirname);
+            printf("Error: Directory '%s' not found in current directory.\n", dirname);
             return -1;
         }
         
         return 0;
     }
+}
+
+void change_dir_root() {
+    current_dir_index = 0;
 }
 
 void ls_dir() {
@@ -400,7 +404,7 @@ int erase_dir_recursive(const char *dirname) {
     }
 
     if (!file_entries[dir_index].is_directory) {
-        printf("Error: '%s' is not a directory.\n", dirname);
+        printf("Error: '%s' is not a Directory.\n", dirname);
         return -1;
     }
 

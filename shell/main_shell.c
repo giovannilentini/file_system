@@ -4,7 +4,7 @@
 #include "../include/shell.h"
 
 int main() {
-    init("shell_disk.img");
+    init("shell/shell_disk.img");
 
     do_command();
 }

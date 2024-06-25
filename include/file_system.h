@@ -94,6 +94,8 @@ int create_dir(const char *dirname);
 */
 int change_dir(const char *path);
 
+void change_dir_root();
+
 /*
     Lists the file and directories in the current directory.
 */
