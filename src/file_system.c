@@ -113,6 +113,10 @@ void erase_disk() {
     sync_fs();
 }
 
+int get_current_dir() { return current_dir_index; }
+
+FileEntry get_fcb() { return file_entries[current_dir_index]; }
+
 /* ===== FILE FUNCTION ===== */
 
 int create_file(const char *filename) {

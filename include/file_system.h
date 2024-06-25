@@ -1,9 +1,5 @@
 #pragma once
 
-#ifndef MIN
-#define MIN(a, b) ((a) < (b) ? (a) : (b))
-#endif
-
 #define FILE_SIS_SIZE 1024 * 1024
 #define BLOCK_SIZE 512
 #define MAX_BLOCKS FILE_SIS_SIZE/BLOCK_SIZE
@@ -31,6 +27,10 @@ typedef struct {
 void init(const char *name);
 
 void erase_disk();
+
+int get_current_dir();
+
+FileEntry get_fcb();
 
 /*
     Creates a new file with the specified name. Returns the 
