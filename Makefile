@@ -33,7 +33,8 @@ $(SHELLDIR)/%: $(SHELLDIR)/%.c $(OBJS)
 
 # Clean up build artifacts
 clean:
-	rm -f $(SRCDIR)/*.o $(BINDIR)/* $(SHELLDIR)/*
+	rm -f $(SRCDIR)/*.o $(BINDIR)/*
+	find $(SHELLDIR) -type f ! -name '*.c' -exec rm -f {} +
 
 .PHONY: all clean
 
