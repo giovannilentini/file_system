@@ -20,7 +20,6 @@ typedef struct {
     int first_child;
     int next_sibling;
     int current_position;
-    int chars_write;
 } FileEntry;
 
 /*
