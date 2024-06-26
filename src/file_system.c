@@ -380,10 +380,6 @@ int change_dir(const char *dirname) {
     }
 }
 
-void change_dir_root() {
-    current_dir_index = 0;
-}
-
 void ls_dir() {
     printf("Listing directory contents for directory '%s':\n", file_entries[current_dir_index].name);
     for (int i = 0; i < MAX_FILE; i++) {
