@@ -15,7 +15,6 @@ void format(int argc, char* argv[MAX_ARGC + 1]) {
         return;
     }
 
-    change_dir_root();
     erase_disk();
 }
 
@@ -93,12 +92,15 @@ void write(int argc, char* argv[MAX_ARGC + 1]) {
         return;
     }
 
-    if ( get_fcb(find_file_index(argv[1])).is_directory ) {
-        printf("Error: cannot write a directory.\n");
+    int file_index = find_file_index(argv[1]);
+    if (file_index < 0) {
         return;
     }
 
-    if (seek(argv[1], 0) < 0) return;
+    if (get_fcb(file_index)->is_directory) {
+        printf("Error: cannot read a directory.\n");
+        return;
+    }
 
     int position;
     
@@ -123,12 +125,15 @@ void read(int argc, char* argv[MAX_ARGC + 1]) {
         return;
     }
 
-    if ( get_fcb(find_file_index(argv[1])).is_directory ) {
-        printf("Error: cannot write a directory.\n");
+    int file_index = find_file_index(argv[1]);
+    if (file_index < 0) {
         return;
     }
 
-    if (seek(argv[1], 0) < 0) return;
+    if (get_fcb(file_index)->is_directory) {
+        printf("Error: cannot read a directory.\n");
+        return;
+    }
 
     int position;
     
@@ -165,41 +170,41 @@ void help(int argc, char* argv[MAX_ARGC + 1]) {
 
     printf("Available commands:\n\n");
 
-    printf("1. format\n");
-    printf("   Usage: format\n");
-    printf("   Description: Formats the disk.\n\n");
+    printf(" 1. format\n");
+    printf("    Usage: format\n");
+    printf("    Description: Formats the disk.\n\n");
 
-    printf("2. touch\n");
-    printf("   Usage: touch <filename>\n");
-    printf("   Description: Creates a new file with the specified name.\n\n");
+    printf(" 2. touch\n");
+    printf("    Usage: touch <filename>\n");
+    printf("    Description: Creates a new file with the specified name.\n\n");
 
-    printf("3. mkdir\n");
-    printf("   Usage: mkdir <dirname>\n");
-    printf("   Description: Creates a new directory with the specified name.\n\n");
+    printf(" 3. mkdir\n");
+    printf("    Usage: mkdir <dirname>\n");
+    printf("    Description: Creates a new directory with the specified name.\n\n");
 
-    printf("4. rm\n");
-    printf("   Usage: rm <filename>\n");
-    printf("   Description: Removes the specified file.\n\n");
+    printf(" 4. rm\n");
+    printf("    Usage: rm <filename>\n");
+    printf("    Description: Removes the specified file.\n\n");
 
-    printf("5. rmrf\n");
-    printf("   Usage: rmrf <dirname>\n");
-    printf("   Description: Recursively removes the specified directory and its contents.\n\n");
+    printf(" 5. rmrf\n");
+    printf("    Usage: rmrf <dirname>\n");
+    printf("    Description: Recursively removes the specified directory and its contents.\n\n");
 
-    printf("6. ls\n");
-    printf("   Usage: ls\n");
-    printf("   Description: Lists the contents of the current directory.\n\n");
+    printf(" 6. ls\n");
+    printf("    Usage: ls\n");
+    printf("    Description: Lists the contents of the current directory.\n\n");
 
-    printf("7. cd\n");
-    printf("   Usage: cd <dirname>\n");
-    printf("   Description: Changes the current directory to the specified directory.\n\n");
+    printf(" 7. cd\n");
+    printf("    Usage: cd <dirname>\n");
+    printf("    Description: Changes the current directory to the specified directory.\n\n");
 
-    printf("8. write\n");
-    printf("   Usage: write <filename>\n");
-    printf("   Description: Writes to the specified file starting at a specified position.\n\n");
+    printf(" 8. write\n");
+    printf("    Usage: write <filename>\n");
+    printf("    Description: Writes to the specified file starting at a specified position.\n\n");
 
-    printf("9. read\n");
-    printf("   Usage: read <filename>\n");
-    printf("   Description: Reads from the specified file starting at a specified position.\n\n");
+    printf(" 9. read\n");
+    printf("    Usage: read <filename>\n");
+    printf("    Description: Reads from the specified file starting at a specified position.\n\n");
 
     printf("10. clear\n");
     printf("    Usage: clear\n");
@@ -216,8 +221,14 @@ void do_command() {
     while (1) {
         
         char* argv[MAX_ARGC+1];
-        FileEntry current_dir_fcb = get_fcb(get_current_dir());
-        printf("%s> ", current_dir_fcb.name);
+        FileEntry *current_dir_fcb = get_fcb(get_current_dir());
+
+        if (current_dir_fcb == NULL) {
+            printf("Error: dir not found\n");
+            exit(EXIT_FAILURE);
+        }
+
+        printf("%s> ", current_dir_fcb->name);
         fgets(command, 128, stdin);
         
         argv[0] = strtok(command, " ");
@@ -249,7 +260,6 @@ void do_command() {
             read(argc, argv);
         } else if (strcmp(argv[0], "clear") == 0) {
             clear(argc, argv);
-            continue;
         } else if (strcmp(argv[0], "help") == 0) {
             help(argc, argv);
         }  else if (strcmp(argv[0], "exit") == 0 || strcmp(argv[0], "quit") == 0) {
