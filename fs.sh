@@ -122,6 +122,7 @@ test() {
 }
 
 shell() {
+    clear
   ./shell/main_shell
 }
 
@@ -134,7 +135,7 @@ case $main_choice in
     1)
         test
         ;;
-    2)
+    2)  
         shell
         ;;
     *)
