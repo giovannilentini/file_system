@@ -22,6 +22,10 @@ int main() {
     seek("file_2_root.txt", 0);
     read_file("file_2_root.txt", buf2, 80);
     printf("read from file '/file_2_root.txt' after seeking to position 0 for reading = %s\n", buf2);
+
+    seek("file_2_root.txt", 10);
+    read_file("file_2_root.txt", buf2, 80);
+    printf("read from file '/file_2_root.txt' after seeking to position 10 for reading = %s\n", buf2);
     printf("********************\n\n");
 
     return 0;

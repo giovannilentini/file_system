@@ -101,6 +101,7 @@ void init(const char *name) {
 void erase_disk() {
     memset(FAT, FAT_FREE, FILE_SIS_SIZE / BLOCK_SIZE * sizeof(int));
     memset(file_entries, 0, MAX_FILE * sizeof(FileEntry));
+    memset(data_blocks, 0, FILE_SIS_SIZE - (sizeof(int) * MAX_BLOCKS) - (sizeof(FileEntry) * MAX_FILE));
 
     strcpy(file_entries[0].name, "/");
     file_entries[0].is_directory = 1;
@@ -110,12 +111,19 @@ void erase_disk() {
     file_entries[0].next_sibling = -1;
     file_entries[0].current_position = 0;
 
+    current_dir_index = 0;
+
     sync_fs();
 }
 
 int get_current_dir() { return current_dir_index; }
 
-FileEntry get_fcb(int file_index) { return file_entries[file_index]; }
+FileEntry* get_fcb(int file_index) {
+    if (file_index < 0) {
+        return NULL;
+    }
+    return &file_entries[file_index]; 
+}
 
 /* ===== FILE FUNCTION ===== */
 
@@ -154,6 +162,7 @@ int create_file(const char *filename) {
 int write_file(const char *filename, const char *buffer, int size) {
     int file_index = find_file_index(filename);
     if (file_index == -1) {
+        printf("write ");
         return -1;
     }
 
@@ -216,6 +225,7 @@ int write_file(const char *filename, const char *buffer, int size) {
 int read_file(const char *filename, char *buffer, int size) {
     int file_index = find_file_index(filename);
     if (file_index == -1) {
+        printf("read: ");
         return -1;
     }
 
@@ -263,6 +273,7 @@ int read_file(const char *filename, char *buffer, int size) {
 int seek(const char *filename, int position) {
     int file_index = find_file_index(filename);
     if (file_index == -1) {
+        printf("seek: ");
         return -1;
     }
 

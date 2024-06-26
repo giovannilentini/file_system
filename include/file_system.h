@@ -47,11 +47,11 @@ int get_current_dir();
 
 /*
     Gets the File Control Block (FCB) for the specified file index.
-    Returns the FileEntry structure for the file.
+    Returns the pointer to the FileEntry structure for the file.
 
     file_index: The index of the file.
 */
-FileEntry get_fcb(int file_index);
+FileEntry* get_fcb(int file_index);
 
 /*
     Creates a new file with the specified name. Returns the 
@@ -118,11 +118,6 @@ int create_dir(const char *dirname);
     dirname: The name of the directory to change to.
 */
 int change_dir(const char *path);
-
-/*
-    Changes the current working directory to the root directory.
-*/
-void change_dir_root();
 
 /*
     Lists the file and directories in the current directory.
