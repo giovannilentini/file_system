@@ -85,7 +85,7 @@ handle_error() {
 
 test() {
     while true; do
-        echo -e "\nWhich test do you want to execute?"
+        echo "\nWhich test do you want to execute?"
         echo "1. Directory and file creation (recommended first)"
         echo "2. File write and read (recommended only if test 1 has been executed)"
         echo "3. File write and read with seek (recommended only if test 1 has been executed)"
@@ -126,7 +126,7 @@ shell() {
   ./shell/main_shell
 }
 
-echo -e "\nWhat do you want to do?"
+echo "\nWhat do you want to do?"
 echo "1. View the tests"
 echo "2. Start the shell"
 read -p "Enter your choice: " main_choice
