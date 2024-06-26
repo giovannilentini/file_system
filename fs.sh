@@ -74,6 +74,7 @@ handle_error() {
         2)
             echo '\nRunning make...\n'
             make
+            test
             ;;
         *)
             echo '\n\033[1;31mInvalid choice. Exiting.\033[0m\n'
@@ -108,9 +109,58 @@ test() {
     done
 }
 
+handle_error_shell() {
+    echo '\n\033[1;31mError: File not found.\033[0m'
+    echo '\nAre you sure you have compiled the files?'
+    echo "1. Yes, I have compiled"
+    echo "2. No, I have not compiled"
+    read -p "Enter your choice: " compile_choice
+
+    case $compile_choice in
+        1)
+            echo '  ______________________________________________'
+            echo ' /                                              \\'
+            echo ' |\033[1;31m                  Don'"'"'t Lie !!!           \033[0m    |'
+            echo ' \\________              ________________________/'
+            echo '          \\_         __/    ___---------__       '
+            echo '            \\      _/      /              \\     '
+            echo '             \\    /       /                 \\    '
+            echo '              |  /       | _    _ \\          \\   '
+            echo '              | |       / / \\  / \\ |          \\  '
+            echo '              | |       ||   ||   ||           | '
+            echo '              | |       | \\_//\\\\_/ |           |'
+            echo '              | |       |_| (||)   |_______|   |'
+            echo '              | |         |  ||     | _  / /   |'
+            echo '               \\ \\        |_________|| \\/ /   /'
+            echo '                \\ \\_       |_|_|_|_|/|  _/___/ '
+            echo '                 \\__>       _ _/_ _ /  |       '
+            echo '                          .|_|_|_|_|   |       '
+            echo '                          |           /        '
+            echo '                          |__________/         '
+            echo ''
+            exit 1
+            ;;
+        2)
+            echo '\nRunning make...\n'
+            make
+            clear
+            shell
+            ;;
+        *)
+            echo '\n\033[1;31mInvalid choice. Exiting.\033[0m\n'
+            exit 1
+            ;;
+    esac
+}
+
 shell() {
+    
+
+    if ! ./shell/main_shell; then
+        handle_error_shell
+    fi
+
     clear
-    ./shell/main_shell
 }
 
 echo '\nWhat do you want to do?'
