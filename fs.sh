@@ -154,13 +154,11 @@ handle_error_shell() {
 }
 
 shell() {
+    clear
     
-
     if ! ./shell/main_shell; then
         handle_error_shell
     fi
-
-    clear
 }
 
 echo '\nWhat do you want to do?'
