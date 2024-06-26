@@ -1,6 +1,6 @@
 # File System Similar to FAT
 
-This project implements a simple file system inspired by the structure of a File Allocation Table (FAT). It is written in C and uses an image file (`test_disk.img`) as persistent storage support. The project includes various functionalities for file and directory management, based on data blocks and a file allocation table (FAT).
+This project implements a simple file system inspired by the structure of a File Allocation Table (FAT). It is written in C and uses an image file as persistent storage support. The project includes various functionalities for file and directory management, based on data blocks and a file allocation table (FAT).
 
 ## Implemented Features
 
