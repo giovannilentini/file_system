@@ -4,7 +4,7 @@ test1() {
     if ! ./bin/dir_test; then
         handle_error
     else
-        echo -e "\n\033[1;32mTest 1 completed: Directory and file creation successfully executed.\033[0m\n"
+        echo "\n\033[1;32mTest 1 completed: Directory and file creation successfully executed.\033[0m\n"
     fi
 }
 
@@ -12,7 +12,7 @@ test2() {
     if ! ./bin/write_read_test; then
         handle_error
     else
-        echo -e "\n\033[1;32mTest 2 completed: File write and read successfully executed.\033[0m\n"
+        echo "\n\033[1;32mTest 2 completed: File write and read successfully executed.\033[0m\n"
     fi
 }
 
@@ -20,7 +20,7 @@ test3() {
     if ! ./bin/seek_test; then
         handle_error
     else
-        echo -e "\n\033[1;32mTest 3 completed: File write and read with seek successfully executed.\033[0m\n"
+        echo "\n\033[1;32mTest 3 completed: File write and read with seek successfully executed.\033[0m\n"
     fi
 }
 
@@ -28,7 +28,7 @@ test4() {
     if ! ./bin/erase_test; then
         handle_error
     else
-        echo -e "\n\033[1;32mTest 4 completed: Directory and file deletion successfully executed.\033[0m\n"
+        echo "\n\033[1;32mTest 4 completed: Directory and file deletion successfully executed.\033[0m\n"
     fi
 }
 
@@ -36,13 +36,13 @@ test5() {
     if ! ./bin/dir_test || ! ./bin/write_read_test || ! ./bin/seek_test || ! ./bin/erase_test; then
         handle_error
     else
-        echo -e "\n\033[1;32mAll tests successfully completed.\033[0m\n"
+        echo "\n\033[1;32mAll tests successfully completed.\033[0m\n"
     fi
 }
 
 handle_error() {
-    echo -e "\n\033[1;31mError: File not found.\033[0m"
-    echo -e "\nAre you sure you have compiled the files?"
+    echo "\n\033[1;31mError: File not found.\033[0m"
+    echo "\nAre you sure you have compiled the files?"
     echo "1. Yes, I have compiled"
     echo "2. No, I have not compiled"
     read -p "Enter your choice: " compile_choice
@@ -52,7 +52,7 @@ handle_error() {
 
         echo " _______________________________________________"
         echo "/                                               \\"
-        echo -e "| \033[1;31m                  Don't Lie !!!           \033[0m   |"
+        echo "| \033[1;31m                  Don't Lie !!!           \033[0m    |"
         echo "\\_________              ________________________/"
         echo "          \\_         __/    ___---------__       "
         echo "            \\      _/      /              \\     "
@@ -73,11 +73,11 @@ handle_error() {
         exit 1
         ;;
         2)
-        echo -e "\nRunning make...\n"
+        echo "\nRunning make...\n"
         make
         ;;
         *)
-        echo -e "\n\033[1;31mInvalid choice. Exiting.\033[0m\n"
+        echo "\n\033[1;31mInvalid choice. Exiting.\033[0m\n"
         exit 1
         ;;
   esac
@@ -111,11 +111,11 @@ test() {
             test5
             ;;
             q)
-            echo -e "\nQuitting...\n"
+            echo "\nQuitting...\n"
             break
             ;;
             *)
-            echo -e "\n\033[1;31mInvalid choice. Please try again.\033[0m\n"
+            echo "\n\033[1;31mInvalid choice. Please try again.\033[0m\n"
             ;;
         esac
     done
@@ -139,6 +139,6 @@ case $main_choice in
         shell
         ;;
     *)
-        echo -e "\n\033[1;31mInvalid choice. Exiting.\033[0m\n"
+        echo "\n\033[1;31mInvalid choice. Exiting.\033[0m\n"
         ;;
 esac
