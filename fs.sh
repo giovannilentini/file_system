@@ -74,7 +74,6 @@ handle_error() {
         2)
             echo '\nRunning make...\n'
             make
-            test
             ;;
         *)
             echo '\n\033[1;31mInvalid choice. Exiting.\033[0m\n'
@@ -101,7 +100,7 @@ test() {
             4) test4 ;;
             5) test5 ;;
             q)
-                echo $'\nQuitting...\n'
+                echo '\n\033[1;32mQuitting ...\033[0m\n'
                 break
                 ;;
             *) echo '\n\033[1;31mInvalid choice. Please try again.\033[0m\n' ;;
@@ -143,7 +142,6 @@ handle_error_shell() {
         2)
             echo '\nRunning make...\n'
             make
-            clear
             shell
             ;;
         *)
@@ -160,14 +158,21 @@ shell() {
         handle_error_shell
     fi
 }
+while true; do
+    echo '\nWhat do you want to do?'
+    echo "1. View the tests"
+    echo "2. Start the shell"
+    echo "c. Compile the files (recommended first)"
+    echo "q. Quit"
+    read -p "Enter your choice: " main_choice
 
-echo '\nWhat do you want to do?'
-echo "1. View the tests"
-echo "2. Start the shell"
-read -p "Enter your choice: " main_choice
-
-case $main_choice in
-    1) test ;;
-    2) shell ;;
-    *) echo $'\n\033[1;31mInvalid choice. Exiting.\033[0m\n' ;;
-esac
+    case $main_choice in
+        1) test ;;
+        2) shell ;;
+        c) make ;;
+        q) 
+            echo '\n\033[1;32mQuitting ...\033[0m\n'
+            break;;
+        *) echo $'\n\033[1;31mInvalid choice. Exiting.\033[0m\n' ;;
+    esac
+done

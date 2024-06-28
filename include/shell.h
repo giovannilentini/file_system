@@ -19,4 +19,6 @@ void write(int argc, char* argv[MAX_ARGC + 1]);
 
 void read(int argc, char* argv[MAX_ARGC + 1]);
 
+void clear(int argc, char* argv[MAX_ARGC + 1]);
+
 void do_command();

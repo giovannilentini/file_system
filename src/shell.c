@@ -98,7 +98,7 @@ void write(int argc, char* argv[MAX_ARGC + 1]) {
     }
 
     if (get_fcb(file_index)->is_directory) {
-        printf("Error: cannot read a directory.\n");
+        printf("Error: cannot write a directory.\n");
         return;
     }
 

@@ -232,7 +232,7 @@ int read_file(const char *filename, char *buffer, int size) {
     FileEntry *file = &file_entries[file_index];
 
     if (file->is_directory) {
-        printf("Error: cannot write a directory.\n");
+        printf("Error: cannot read a directory.\n");
         return -1;
     }
 
