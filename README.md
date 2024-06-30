@@ -48,5 +48,3 @@ make clean
 ## Contributions
 
 This project was developed as part of an educational exercise to understand the fundamentals of file systems and the low-level operations involved in their implementation.
-
-For more details and to explore the source code, visit the GitHub repository.
