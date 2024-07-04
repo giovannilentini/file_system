@@ -209,7 +209,7 @@ int write_file(const char *filename, const char *buffer, int size) {
 
         // Check if there is more data to write and if we need a new block
         if (remaining_size > 0) {
-            // If the current block is the last block, allocate a new one
+            // If the current block is the last block allocate a new one
             if (FAT[current_block] == MY_EOF) {
                 int new_block = allocate_block();
                 if (new_block == -1) {
@@ -229,11 +229,10 @@ int write_file(const char *filename, const char *buffer, int size) {
     sync_fs();
     return size;
 }
-
 int read_file(const char *filename, char *buffer, int size) {
     int file_index = find_file_index(filename);
     if (file_index == -1) {
-        printf("read: ");
+        printf("read: File not found.\n");
         return -1;
     }
 
@@ -249,6 +248,7 @@ int read_file(const char *filename, char *buffer, int size) {
     int offset = 0;
     int current_position = file->current_position;
 
+    // Adjust the current_block and current_position if we are past the first block
     while (current_position >= BLOCK_SIZE) {
         if (FAT[current_block] == MY_EOF) {
             printf("Reached EOF while seeking to current position.\n");
@@ -258,16 +258,19 @@ int read_file(const char *filename, char *buffer, int size) {
         current_position -= BLOCK_SIZE;
     }
 
+    // Read data starting from the current_position
     while (remaining_size > 0 && current_block != MY_EOF) {
         int pos_in_block = current_position % BLOCK_SIZE;
         int to_read = (remaining_size < (BLOCK_SIZE - pos_in_block)) ? remaining_size : (BLOCK_SIZE - pos_in_block);
 
+        // Copy the data from the file system's data blocks to the buffer
         memcpy(buffer + offset, data_blocks + current_block * BLOCK_SIZE + pos_in_block, to_read);
 
         remaining_size -= to_read;
         offset += to_read;
         current_position += to_read;
 
+        // Move to the next block if there's more data to read
         if (remaining_size > 0) {
             current_block = FAT[current_block];
             current_position = 0;
@@ -438,6 +441,7 @@ int erase_dir_recursive(const char *dirname) {
     int original_dir_index = current_dir_index;
 
     if (change_dir(dirname) != 0) {
+        printf("Error: cannot switch to '%s' in rm -rf.\n", dirname);
         return -1;
     }
 
