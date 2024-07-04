@@ -194,25 +194,33 @@ int write_file(const char *filename, const char *buffer, int size) {
     }
 
     while (remaining_size > 0) {
+        // Calculate the position within the current block where we need to start writing
         int pos_in_block = current_position % BLOCK_SIZE;
+        // Determine the amount of data to write in the current block
         int to_write = (remaining_size < (BLOCK_SIZE - pos_in_block)) ? remaining_size : (BLOCK_SIZE - pos_in_block);
 
+        // Copy data from the buffer to the correct position in the data blocks
         memcpy(data_blocks + current_block * BLOCK_SIZE + pos_in_block, buffer + offset, to_write);
 
+        // Update the remaining size, buffer offset, and current position in the file
         remaining_size -= to_write;
         offset += to_write;
         current_position += to_write;
 
+        // Check if there is more data to write and if we need a new block
         if (remaining_size > 0) {
+            // If the current block is the last block, allocate a new one
             if (FAT[current_block] == MY_EOF) {
                 int new_block = allocate_block();
                 if (new_block == -1) {
                     printf("No more blocks available.\n");
                     return -1;
                 }
+                // Link the current block to the new block in the FAT
                 FAT[current_block] = new_block;
                 FAT[new_block] = MY_EOF;
             }
+            // Move to the next block and reset the position to the start of the block
             current_block = FAT[current_block];
             current_position = 0;
         }
