@@ -113,8 +113,8 @@ void write(int argc, char* argv[MAX_ARGC + 1]) {
     printf("Enter text: ");
     char* str = calloc(2048, sizeof(char));
     fgets(str, 2048, stdin);
-    str[strlen(str) - 1] = 0;
-    write_file(argv[1], str, strlen(str));
+    //str[strlen(str) - 1] = 0;
+    write_file(argv[1], str, strlen(str)-1);
 }
 
 void read(int argc, char* argv[MAX_ARGC + 1]) {

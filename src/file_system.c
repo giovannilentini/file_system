@@ -173,11 +173,13 @@ int write_file(const char *filename, const char *buffer, int size) {
         return -1;
     }
 
-    file->size = file->current_position + size;
+    file->size = file->current_position + size > file->size ? file->current_position + size : file->size;
     int current_block = file->first_block;
     int remaining_size = size;
     int offset = 0;
     int current_position = file->current_position;
+
+    //printf("%d\n", file->size);
 
     while (current_position >= BLOCK_SIZE) {
         if (FAT[current_block] == MY_EOF) {
@@ -244,7 +246,7 @@ int read_file(const char *filename, char *buffer, int size) {
     }
 
     int current_block = file->first_block;
-    int remaining_size = file->size < size ? file->size : size;
+    int remaining_size = file->size;
     int offset = 0;
     int current_position = file->current_position;
 
