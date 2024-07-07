@@ -77,7 +77,6 @@ void init(const char *name) {
         file_entries[0].is_directory = 1;
         file_entries[0].parent_index = -1;
         file_entries[0].first_child = -1;
-        file_entries[0].next_sibling = -1;
         file_entries[0].current_position = 0;
 
         for (int i = 1; i < MAX_FILE; i++) {
@@ -89,8 +88,7 @@ void init(const char *name) {
 
         current_dir_index = 0;
 
-        create_file("test.txt");
-        erase_file("test.txt");
+  
         sync_fs();
     } else {
         current_dir_index = 0;
@@ -108,7 +106,6 @@ void erase_disk() {
     file_entries[0].first_block = MY_EOF;
     file_entries[0].parent_index = -1;
     file_entries[0].first_child = -1;
-    file_entries[0].next_sibling = -1;
     file_entries[0].current_position = 0;
 
     current_dir_index = 0;
@@ -147,7 +144,6 @@ int create_file(const char *filename) {
             file_entries[i].is_directory = 0;
             file_entries[i].parent_index = current_dir_index;
             file_entries[i].first_child = -1;
-            file_entries[i].next_sibling = file_entries[current_dir_index].first_child;
             file_entries[current_dir_index].first_child = i;
             file_entries[i].current_position = 0;
             
@@ -325,7 +321,6 @@ void erase_file(const char *filename) {
     memset(file_entries[file_index].name, 0, 64);
     file_entries[file_index].name[0] = '\0';
     file_entries[file_index].first_child = -1;
-    file_entries[file_index].next_sibling = -1;
     file_entries[file_index].is_directory = 0;
     file_entries[file_index].parent_index = -1;
     file_entries[file_index].current_position = 0;
@@ -351,7 +346,6 @@ int create_dir(const char *dirname) {
             file_entries[i].is_directory = 1;
             file_entries[i].parent_index = current_dir_index;
             file_entries[i].first_child = -1;
-            file_entries[i].next_sibling = file_entries[current_dir_index].first_child;
             file_entries[current_dir_index].first_child = i;
             file_entries[i].current_position = 0;
             
@@ -426,7 +420,6 @@ int erase_handle(int file_index) {
     strcpy(file_entries[file_index].name, "");
     file_entries[file_index].first_child = -1;
     file_entries[file_index].first_block = -1;
-    file_entries[file_index].next_sibling = -1;
     file_entries[file_index].current_position = 0;
     return 0;
 }
@@ -450,13 +443,11 @@ int erase_dir_recursive(const char *dirname) {
         erase_handle(check);
         check = is_ok();
     }
-
-    sync_fs();
     for (int i=0; i<256; i++) {
         if (file_entries[i].name[0] != '\0')
             printf("pos:%d\nname: %s\nis_d: %d\n\n\n", i, file_entries[i].name, file_entries[i].is_directory);
     }
-
+    sync_fs();
     return 0;
 }
 

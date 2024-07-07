@@ -14,7 +14,6 @@ typedef struct {
     int is_directory;
     int parent_index;
     int first_child;
-    int next_sibling;
     int current_position;
 } FileEntry;
 
