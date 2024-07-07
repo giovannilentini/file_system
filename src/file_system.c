@@ -443,10 +443,6 @@ int erase_dir_recursive(const char *dirname) {
         erase_handle(check);
         check = is_ok();
     }
-    for (int i=0; i<256; i++) {
-        if (file_entries[i].name[0] != '\0')
-            printf("pos:%d\nname: %s\nis_d: %d\n\n\n", i, file_entries[i].name, file_entries[i].is_directory);
-    }
     sync_fs();
     return 0;
 }
