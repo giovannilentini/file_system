@@ -147,8 +147,8 @@ int create_file(const char *filename) {
             file_entries[i].is_directory = 0;
             file_entries[i].parent_index = current_dir_index;
             file_entries[i].first_child = -1;
-            file_entries[current_dir_index].first_child = i;
             file_entries[i].next_sibling = file_entries[current_dir_index].first_child;
+            file_entries[current_dir_index].first_child = i;
             file_entries[i].current_position = 0;
             
             sync_fs();
@@ -158,6 +158,7 @@ int create_file(const char *filename) {
     printf("Error: Maximum number of files reached.\n");
     return -1;
 }
+
 
 int write_file(const char *filename, const char *buffer, int size) {
     int file_index = find_file_index(filename);
@@ -231,6 +232,7 @@ int write_file(const char *filename, const char *buffer, int size) {
     sync_fs();
     return size;
 }
+
 int read_file(const char *filename, char *buffer, int size) {
     int file_index = find_file_index(filename);
     if (file_index == -1) {
@@ -362,6 +364,7 @@ int create_dir(const char *dirname) {
     return -1;
 }
 
+
 int change_dir(const char *dirname) {
     if (strcmp(dirname, "..") == 0) {
         if (current_dir_index == 0) {
@@ -406,8 +409,7 @@ void ls_dir() {
     }
 }
 
-int erase_handle(const char *name) {
-    int file_index = find_file_index(name);
+int erase_handle(int file_index) {
     if (file_index == -1) {
         return -1;
     }
@@ -440,27 +442,31 @@ int erase_dir_recursive(const char *dirname) {
         return -1;
     }
 
-    int original_dir_index = current_dir_index;
+    erase_handle(dir_index);
 
-    if (change_dir(dirname) != 0) {
-        printf("Error: cannot switch to '%s' in rm -rf.\n", dirname);
-        return -1;
+    int check = is_ok();
+
+    while(check != -29) {
+        erase_handle(check);
+        check = is_ok();
     }
 
-    int child_index = file_entries[dir_index].first_child;
-    while (child_index != -1) {
-        if (file_entries[child_index].is_directory) {
-            erase_dir_recursive(file_entries[child_index].name);
-        } else {
-            erase_handle(file_entries[child_index].name);
-        }
-        child_index =  file_entries[child_index].next_sibling;
-    }
-
-    current_dir_index = original_dir_index;
- 
-    erase_handle(dirname);
     sync_fs();
- 
+    for (int i=0; i<256; i++) {
+        if (file_entries[i].name[0] != '\0')
+            printf("pos:%d\nname: %s\nis_d: %d\n\n\n", i, file_entries[i].name, file_entries[i].is_directory);
+    }
+
     return 0;
+}
+
+int is_ok() {
+
+    for (int i = 0; i < MAX_FILE; i++) {
+        if (file_entries[i].name[0] != '\0' && file_entries[i].parent_index != -1 && file_entries[file_entries[i].parent_index].name[0] == '\0') {
+            return i;
+        }
+    }
+
+    return -29;
 }
