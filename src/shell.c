@@ -97,7 +97,7 @@ void write(int argc, char* argv[MAX_ARGC + 1]) {
         return;
     }
 
-    if (get_fcb(file_index)->is_directory) {
+    if (open_file_entry(file_index)->is_directory) {
         printf("Error: cannot write a directory.\n");
         return;
     }
@@ -130,7 +130,7 @@ void read(int argc, char* argv[MAX_ARGC + 1]) {
         return;
     }
 
-    if (get_fcb(file_index)->is_directory) {
+    if (open_file_entry(file_index)->is_directory) {
         printf("Error: cannot read a directory.\n");
         return;
     }
@@ -221,7 +221,7 @@ void do_command() {
     while (1) {
         
         char* argv[MAX_ARGC+1];
-        FileEntry *current_dir_fcb = get_fcb(get_current_dir());
+        FileEntry *current_dir_fcb = open_file_entry(get_current_dir());
 
         if (current_dir_fcb == NULL) {
             printf("Error: dir not found\n");

@@ -50,7 +50,7 @@ int get_current_dir();
 
     file_index: The index of the file.
 */
-FileEntry* get_fcb(int file_index);
+FileEntry* open_file_entry(int file_index);
 
 /*
     Creates a new file with the specified name. Returns the 

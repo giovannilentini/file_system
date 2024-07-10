@@ -115,7 +115,7 @@ void erase_disk() {
 
 int get_current_dir() { return current_dir_index; }
 
-FileEntry* get_fcb(int file_index) {
+FileEntry* open_file_entry(int file_index) {
     if (file_index < 0) {
         return NULL;
     }
