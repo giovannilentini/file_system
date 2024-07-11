@@ -8,6 +8,7 @@ void int_to_string(int num, char *str) {
 }
 
 int main() {
+    /*
     init("bin/file_test_disk.img");
 
     char name[4] = {0}, buf[256] = {0};
@@ -27,4 +28,5 @@ int main() {
     erase_disk();
 
     return 0;
+    */
 }

@@ -6,7 +6,7 @@
 #include "../include/file_system.h"
 
 char command[MAX_COMMAND_LEN];
-
+/*
 void format(int argc, char* argv[MAX_ARGC + 1]) {
 
     if (argc != 1) {
@@ -215,9 +215,7 @@ void help(int argc, char* argv[MAX_ARGC + 1]) {
     printf("    Description: Displays this help message.\n\n");
 }
 
-
 void do_command() {
-
     while (1) {
         
         char* argv[MAX_ARGC+1];
@@ -268,5 +266,5 @@ void do_command() {
             printf("Error: %s command not found\n", command);
         }
     }
-    
 }
+*/ 

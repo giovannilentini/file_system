@@ -3,6 +3,7 @@
 #include "../include/file_system.h"
 
 int main() {
+    /*
     init("bin/test_disk.img");
 
     printf("\n********************\ncurrent dir: root\n\n");
@@ -60,4 +61,5 @@ int main() {
     ls_dir();
 
     return 0;
+    */
 }

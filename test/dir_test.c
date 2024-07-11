@@ -4,6 +4,18 @@
 
 int main() {
     init("bin/test_disk.img");
+
+    printf("\n********************\ncurrent dir: root\n\n");
+    create_file("file_1_root.txt");
+    create_file("file_2_root.txt");
+    create_file("file_3_root.txt");
+    create_dir("dir 1");
+    create_dir("dir 2");
+    ls_dir();
+    printf("********************\n");
+
+    /*
+    init("bin/test_disk.img");
     erase_disk();
 
     printf("\n********************\ncurrent dir: root\n\n");
@@ -45,6 +57,6 @@ int main() {
     change_dir("nonexistentdir");
     change_dir("dir 1_1");
     printf("********************\n\n");
-    
+    */
     return 0;
 }

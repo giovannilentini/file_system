@@ -3,7 +3,6 @@
 #define FILE_SIS_SIZE 1024 * 1024
 #define BLOCK_SIZE 512
 #define MAX_BLOCKS FILE_SIS_SIZE/BLOCK_SIZE
-#define MAX_FILE 256
 #define FAT_FREE 0
 #define MY_EOF -1
 
@@ -12,8 +11,6 @@ typedef struct {
     int first_block;
     int size;
     int is_directory;
-    int parent_index;
-    int first_child;
     int current_position;
 } FileEntry;
 
