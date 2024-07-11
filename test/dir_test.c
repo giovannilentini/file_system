@@ -4,6 +4,7 @@
 
 int main() {
     init("bin/test_disk.img");
+    erase_disk();
 
     printf("\n********************\ncurrent dir: root\n\n");
     create_file("file_1_root.txt");

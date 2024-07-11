@@ -76,6 +76,26 @@ void init(const char *name) {
     current_dir_index = 0;
 }
 
+void erase_disk() {
+    memset(FAT, FAT_FREE, FILE_SIS_SIZE / BLOCK_SIZE * sizeof(int));
+    memset(data_blocks, 0, FILE_SIS_SIZE - (sizeof(int) * MAX_BLOCKS));
+
+    FAT[0] = MY_EOF;
+
+    FileEntry root;
+    strcpy(root.name, "/");
+    root.first_block = 0;
+    root.size = 0;
+    root.is_directory = 1;
+    root.current_position = 0;
+
+    memcpy(data_blocks, &root, sizeof(FileEntry));
+
+    current_dir_index = 0;
+
+    sync_fs();
+}
+
 /* ===== FILE FUNCTION ===== */
 
 int create_file(const char *filename) {

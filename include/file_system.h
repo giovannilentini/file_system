@@ -7,7 +7,7 @@
 #define MY_EOF -1
 
 typedef struct {
-    char name[64];
+    char name[48];
     int first_block;
     int size;
     int is_directory;
