@@ -36,6 +36,25 @@ int allocate_block() {
     return -1;
 }
 
+int find_file_entry(const char *name, int dir_block) {
+    int block = dir_block;
+
+    while (block != MY_EOF) {
+        for (int i = 0; i < BLOCK_SIZE / sizeof(FileEntry); i++) {
+            FileEntry *entry = (FileEntry *)(data_blocks + block * BLOCK_SIZE + i * sizeof(FileEntry));
+
+            if (entry->first_block != FAT_FREE && strcmp(entry->name, name) == 0) {
+                return block * (BLOCK_SIZE / sizeof(FileEntry)) + i;
+            }
+        }
+
+        block = FAT[block];
+    }
+
+    printf("Error: File or Directory '%s' not found in the current directory.\n", name);
+    return -1;
+}
+
 /* ===== DISK FUNCTION ===== */
 
 void init(const char *name) {
@@ -111,6 +130,7 @@ int create_file(const char *filename) {
                 strcpy(entry->name, filename);
                 entry->is_directory = 0;
                 entry->first_block = allocate_block();
+                entry->current_position = 0;
                 if (entry->first_block == -1) {
                     printf("Error: No free blocks available.\n");
                     return -1;
@@ -144,6 +164,134 @@ int create_file(const char *filename) {
 
     sync_fs();
     return 0;
+}
+
+int write_file(const char *filename, const char *buffer, int size) {
+    int file_entry_index = find_file_entry(filename, current_dir_index);
+    if (file_entry_index == -1) {
+        return -1;
+    }
+
+    FileEntry *file = (FileEntry *)(
+        data_blocks +                             // Start of the memory region
+        (file_entry_index / (BLOCK_SIZE / sizeof(FileEntry))) * BLOCK_SIZE +  // Offset to the start of the block
+        (file_entry_index % (BLOCK_SIZE / sizeof(FileEntry))) * sizeof(FileEntry) // Offset within the block
+    );
+
+    if (file->is_directory) {
+        printf("Error: cannot write a directory.\n");
+        return -1;
+    }
+
+    file->size = file->current_position + size > file->size ? file->current_position + size : file->size;
+    int current_block = file->first_block;
+    int remaining_size = size;
+    int offset = 0;
+    int current_position = file->current_position;
+
+    while (current_position >= BLOCK_SIZE) {
+        if (FAT[current_block] == MY_EOF) {
+            int new_block = allocate_block();
+            if (new_block == -1) {
+                printf("No more blocks available.\n");
+                return -1;
+            }
+            FAT[current_block] = new_block;
+            FAT[new_block] = MY_EOF;
+        }
+        current_block = FAT[current_block];
+        current_position -= BLOCK_SIZE;
+    }
+
+    while (remaining_size > 0) {
+        // Calculate the position within the current block where we need to start writing
+        int pos_in_block = current_position % BLOCK_SIZE;
+        // Determine the amount of data to write in the current block
+        int to_write = (remaining_size < (BLOCK_SIZE - pos_in_block)) ? remaining_size : (BLOCK_SIZE - pos_in_block);
+
+        // Copy data from the buffer to the correct position in the data blocks
+        memcpy(data_blocks + current_block * BLOCK_SIZE + pos_in_block, buffer + offset, to_write);
+
+        // Update the remaining size, buffer offset, and current position in the file
+        remaining_size -= to_write;
+        offset += to_write;
+        current_position += to_write;
+
+        // Check if there is more data to write and if we need a new block
+        if (remaining_size > 0) {
+            // If the current block is the last block allocate a new one
+            if (FAT[current_block] == MY_EOF) {
+                int new_block = allocate_block();
+                if (new_block == -1) {
+                    printf("No more blocks available.\n");
+                    return -1;
+                }
+                // Link the current block to the new block in the FAT
+                FAT[current_block] = new_block;
+                FAT[new_block] = MY_EOF;
+            }
+            // Move to the next block and reset the position to the start of the block
+            current_block = FAT[current_block];
+            current_position = 0;
+        }
+    }
+
+    sync_fs();
+    return size;
+}
+
+int read_file(const char *filename, char *buffer, int size) {
+    int file_entry_index = find_file_entry(filename, current_dir_index);
+    if (file_entry_index == -1) {
+        return -1;
+    }
+
+    FileEntry *file = (FileEntry *)(
+        data_blocks +                             // Start of the memory region
+        (file_entry_index / (BLOCK_SIZE / sizeof(FileEntry))) * BLOCK_SIZE +  // Offset to the start of the block
+        (file_entry_index % (BLOCK_SIZE / sizeof(FileEntry))) * sizeof(FileEntry) // Offset within the block
+    );
+
+    if (file->is_directory) {
+        printf("Error: cannot read a directory.\n");
+        return -1;
+    }
+
+    int current_block = file->first_block;
+    int remaining_size = file->size;
+    int offset = 0;
+    int current_position = file->current_position;
+
+    while (current_position >= BLOCK_SIZE) {
+        if (FAT[current_block] == MY_EOF) {
+            printf("Reached EOF while seeking to current position.\n");
+            return -1;
+        }
+        current_block = FAT[current_block];
+        current_position -= BLOCK_SIZE;
+    }
+
+    // Read data starting from the current_position
+    while (remaining_size > 0 && current_block != MY_EOF) {
+        int pos_in_block = current_position % BLOCK_SIZE;
+        int to_read = (remaining_size < (BLOCK_SIZE - pos_in_block)) ? remaining_size : (BLOCK_SIZE - pos_in_block);
+
+        // Copy the data from the file system's data blocks to the buffer
+        memcpy(buffer + offset, data_blocks + current_block * BLOCK_SIZE + pos_in_block, to_read);
+
+        remaining_size -= to_read;
+        offset += to_read;
+        current_position += to_read;
+
+        // Move to the next block if there's more data to read
+        if (remaining_size > 0) {
+            current_block = FAT[current_block];
+            current_position = 0;
+        }
+    }
+
+    sync_fs();
+    return offset;
 }
 
 /* ===== DIRECTORY FUNCTION ===== */
