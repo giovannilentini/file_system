@@ -113,7 +113,7 @@ int create_dir(const char *dirname);
 
     dirname: The name of the directory to change to.
 */
-int change_dir(const char *path);
+int change_dir(const char *dirname);
 
 /*
     Lists the file and directories in the current directory.

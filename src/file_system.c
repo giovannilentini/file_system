@@ -99,106 +99,163 @@ void erase_disk() {
 /* ===== FILE FUNCTION ===== */
 
 int create_file(const char *filename) {
-    int dir_block = current_dir_index;
-    while (dir_block != MY_EOF) {
+    int current_block = current_dir_index;
+
+    while (current_block != MY_EOF) {
+        FileEntry *current_dir = (FileEntry *)(data_blocks + current_block * BLOCK_SIZE);
+
         for (int i = 0; i < BLOCK_SIZE / sizeof(FileEntry); i++) {
-            FileEntry *entry = (FileEntry *)(data_blocks + dir_block * BLOCK_SIZE + i * sizeof(FileEntry));
+            FileEntry *file_entry = current_dir + i;
 
-            if (entry->first_block != FAT_FREE && strcmp(entry->name, filename) == 0) {
-                printf("Error: File or Directory '%s' already exists in the current directory.\n", filename);
-                return -1;
-            }
-
-            if (entry->first_block == FAT_FREE) {
-                int block = allocate_block();
-                if (block == -1) {
-                    printf("Error: No more blocks available.\n");
+            if (file_entry->name[0] == '\0') {
+                strcpy(file_entry->name, filename);
+                file_entry->first_block = allocate_block();
+                if (file_entry->first_block == -1) {
+                    printf("Error: Failed to allocate block for file '%s'\n", filename);
                     return -1;
                 }
-
-                strcpy(entry->name, filename);
-                entry->first_block = block;
-                entry->size = 0;
-                entry->is_directory = 0;
-                entry->current_position = 0;
+                file_entry->size = 0;
+                file_entry->is_directory = 0;
+                file_entry->current_position = 0;
 
                 sync_fs();
-                return dir_block * (BLOCK_SIZE / sizeof(FileEntry)) + i;
+                return i;
             }
         }
 
-        if (FAT[dir_block] == MY_EOF) {
+        int next_block = FAT[current_block];
+        if (next_block == MY_EOF) {
             int new_block = allocate_block();
             if (new_block == -1) {
-                printf("Error: No more blocks available.\n");
+                printf("Error: Failed to allocate block for new directory block\n");
                 return -1;
             }
-            FAT[dir_block] = new_block;
+            FAT[current_block] = new_block;
             FAT[new_block] = MY_EOF;
+            current_block = new_block;
+
+            FileEntry *new_dir_block = (FileEntry *)(data_blocks + new_block * BLOCK_SIZE);
+            memset(new_dir_block, 0, BLOCK_SIZE);
+            sync_fs();
+        } else {
+            current_block = next_block;
         }
-        dir_block = FAT[dir_block];
     }
 
+    printf("Error: Failed to create file '%s'\n", filename);
     return -1;
 }
 
 /* ===== DIRECTORY FUNCTION ===== */
 
 int create_dir(const char *dirname) {
-    int dir_block = current_dir_index;
-    while (dir_block != MY_EOF) {
+    int current_block = current_dir_index;
+
+    while (current_block != MY_EOF) {
+        FileEntry *current_dir = (FileEntry *)(data_blocks + current_block * BLOCK_SIZE);
+
         for (int i = 0; i < BLOCK_SIZE / sizeof(FileEntry); i++) {
-            FileEntry *entry = (FileEntry *)(data_blocks + dir_block * BLOCK_SIZE + i * sizeof(FileEntry));
-
-            if (entry->first_block != FAT_FREE && strcmp(entry->name, dirname) == 0) {
-                printf("Error: File or Directory '%s' already exists in the current directory.\n", dirname);
-                return -1;
-            }
-
-            if (entry->first_block == FAT_FREE) {
-                int block = allocate_block();
-                if (block == -1) {
-                    printf("Error: No more blocks available.\n");
+            FileEntry *dir_entry = current_dir + i;
+            
+            if (dir_entry->name[0] == '\0') {
+                strcpy(dir_entry->name, dirname);
+                dir_entry->first_block = allocate_block();
+                if (dir_entry->first_block == -1) {
+                    printf("Error: Failed to allocate block for directory '%s'\n", dirname);
                     return -1;
                 }
+                dir_entry->size = 0;
+                dir_entry->is_directory = 1;
+                dir_entry->current_position = 0;
 
-                strcpy(entry->name, dirname);
-                entry->first_block = block;
-                entry->size = 0;
-                entry->is_directory = 1;
-                entry->current_position = 0;
+                FileEntry *new_dir = (FileEntry *)(data_blocks + dir_entry->first_block * BLOCK_SIZE);
+                memset(new_dir, 0, BLOCK_SIZE);
 
                 sync_fs();
-                return dir_block * (BLOCK_SIZE / sizeof(FileEntry)) + i;
+                return i;
             }
         }
 
-        if (FAT[dir_block] == MY_EOF) {
+        int next_block = FAT[current_block];
+        if (next_block == MY_EOF) {
             int new_block = allocate_block();
             if (new_block == -1) {
-                printf("Error: No more blocks available.\n");
+                printf("Error: Failed to allocate block for new directory block\n");
                 return -1;
             }
-            FAT[dir_block] = new_block;
+            FAT[current_block] = new_block;
             FAT[new_block] = MY_EOF;
+            current_block = new_block;
+
+            FileEntry *new_dir_block = (FileEntry *)(data_blocks + new_block * BLOCK_SIZE);
+            memset(new_dir_block, 0, BLOCK_SIZE);
+            sync_fs();
+        } else {
+            current_block = next_block;
         }
-        dir_block = FAT[dir_block];
     }
 
+    printf("Error: Failed to create directory '%s'\n", dirname);
     return -1;
 }
 
-void ls_dir() {
-    int dir_block = current_dir_index;
-    while (dir_block != MY_EOF) {
-        for (int i = 0; i < BLOCK_SIZE / sizeof(FileEntry); i++) {
-            FileEntry *entry = (FileEntry *)(data_blocks + dir_block * BLOCK_SIZE + i * sizeof(FileEntry));
+int change_dir(const char *dirname) {
+    if (strcmp(dirname, "..") == 0) {
+        if (current_dir_index == 0) {
+            printf("Already at root directory.\n");
+            return -1;
+        } else {
+            for (int i = 0; i < MAX_BLOCKS; i++) {
+                FileEntry *entry = (FileEntry *)(data_blocks + i * BLOCK_SIZE);
+                for (int j = 0; j < BLOCK_SIZE / sizeof(FileEntry); j++) {
+                    FileEntry *sub_entry = entry + j;
+                    if (sub_entry->is_directory && sub_entry->first_block == current_dir_index) {
+                        current_dir_index = i;
+                        return 0;
+                    }
+                }
+            }
+            printf("Error: Parent directory not found.\n");
+            return -1;
+        }
+    } else {
+        int current_block = current_dir_index;
 
-            if (entry->first_block != FAT_FREE) {
-                printf("%s: '%s'\n", entry->is_directory ? "Dir" : "File", entry->name);
+        while (current_block != MY_EOF) {
+            FileEntry *current_dir = (FileEntry *)(data_blocks + current_block * BLOCK_SIZE);
+
+            for (int i = 0; i < BLOCK_SIZE / sizeof(FileEntry); i++) {
+                FileEntry *entry = current_dir + i;
+                if (entry->name[0] != '\0' && entry->is_directory && strcmp(entry->name, dirname) == 0) {
+                    current_dir_index = entry->first_block;
+                    return 0;
+                }
+            }
+
+            current_block = FAT[current_block];
+        }
+
+        printf("Error: Directory '%s' not found in current directory.\n", dirname);
+        return -1;
+    }
+}
+
+
+void ls_dir() {
+    int current_block = current_dir_index;
+    printf("Listing directory contents for directory '%s':\n", ((FileEntry *)(data_blocks + current_block * BLOCK_SIZE))->name);
+
+    while (current_block != MY_EOF) {
+        FileEntry *current_dir = (FileEntry *)(data_blocks + current_block * BLOCK_SIZE);
+
+        for (int i = 0; i < BLOCK_SIZE / sizeof(FileEntry); i++) {
+            FileEntry *entry = current_dir + i;
+            if (entry->name[0] != '\0') {
+                printf("%s: %s\n", entry->is_directory ? "Dir" : "File", entry->name);
             }
         }
 
-        dir_block = FAT[dir_block];
+        current_block = FAT[current_block];
     }
 }
+
