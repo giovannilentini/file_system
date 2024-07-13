@@ -4,7 +4,7 @@
 #include "../include/file_system.h"
 
 int main() {
-    /*
+
     init("bin/test_disk.img");
 
     char buf[5] = {0}; 
@@ -30,5 +30,4 @@ int main() {
     printf("********************\n\n");
 
     return 0;
-    */
 }

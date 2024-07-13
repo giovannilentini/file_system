@@ -294,6 +294,33 @@ int read_file(const char *filename, char *buffer, int size) {
     return offset;
 }
 
+int seek(const char *filename, int position) {
+    int file_entry_index = find_file_entry(filename, current_dir_index);
+    if (file_entry_index == -1) {
+        return -1;
+    }
+
+    FileEntry *file = (FileEntry *)(
+        data_blocks +                             // Start of the memory region
+        (file_entry_index / (BLOCK_SIZE / sizeof(FileEntry))) * BLOCK_SIZE +  // Offset to the start of the block
+        (file_entry_index % (BLOCK_SIZE / sizeof(FileEntry))) * sizeof(FileEntry) // Offset within the block
+    );
+    
+    if (file->is_directory) {
+        printf("Error: cannot seek a directory.\n");
+        return -1;
+    }
+
+    if (position > file->size) {
+        printf("Error: seek position is beyond the file size.\n");
+        return -1;
+    }
+
+    file->current_position = position;
+    sync_fs();
+    return 0;
+}
+
 /* ===== DIRECTORY FUNCTION ===== */
 
 int create_dir(const char *dirname) {
@@ -399,7 +426,7 @@ void ls_dir() {
 
         for (int i = 0; i < BLOCK_SIZE / sizeof(FileEntry); i++) {
             FileEntry *entry = current_dir + i;
-            if (entry->name[0] != '\0') {
+            if (entry->name[0] != '\0' && strcmp(entry->name, "/") != 0 && entry->first_block != 0) {
                 printf("%s: %s\n", entry->is_directory ? "Dir" : "File", entry->name);
             }
         }
