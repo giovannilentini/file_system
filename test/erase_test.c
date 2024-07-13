@@ -3,7 +3,6 @@
 #include "../include/file_system.h"
 
 int main() {
-    /*
     init("bin/test_disk.img");
 
     printf("\n********************\ncurrent dir: root\n\n");
@@ -40,7 +39,7 @@ int main() {
     printf("ls before delete 'file_to_delete.txt'\n\n");
     ls_dir();
     erase_file("file_to_delete.txt");
-    printf("\nls after 'file_to_delete.txt'\n\n");
+    printf("\nls after delete 'file_to_delete.txt'\n\n");
     ls_dir();
 
     printf("\nls before delete 'empty_dir'\n\n");
@@ -51,7 +50,7 @@ int main() {
 
     printf("\nls before delete 'full_dir'\n\n");
     ls_dir();
-    erase_dir_recursive("full_dir");
+    //erase_dir_recursive("full_dir");
     printf("\nls after delete 'full_dir'\n\n");
     ls_dir();
     printf("********************\n\n");
@@ -61,5 +60,4 @@ int main() {
     ls_dir();
 
     return 0;
-    */
 }

@@ -321,6 +321,50 @@ int seek(const char *filename, int position) {
     return 0;
 }
 
+void erase_file(const char *filename) {
+    int file_entry_index = find_file_entry(filename, current_dir_index);
+    if (file_entry_index == -1) {
+        return;
+    }
+
+    FileEntry *file = (FileEntry *)(
+        data_blocks +                             // Start of the memory region
+        (file_entry_index / (BLOCK_SIZE / sizeof(FileEntry))) * BLOCK_SIZE +  // Offset to the start of the block
+        (file_entry_index % (BLOCK_SIZE / sizeof(FileEntry))) * sizeof(FileEntry) // Offset within the block
+    );
+
+    if (file->is_directory) {
+        int dir_block = file->first_block;
+        int is_empty = 1;
+
+        while (dir_block != MY_EOF && is_empty) {
+            for (int i = 0; i < BLOCK_SIZE / sizeof(FileEntry); i++) {
+                FileEntry *entry = (FileEntry *)(data_blocks + dir_block * BLOCK_SIZE + i * sizeof(FileEntry));
+                if (entry->name[0] != '\0') {
+                    is_empty = 0;
+                    break;
+                }
+            }
+            dir_block = FAT[dir_block];
+        }
+
+        if (!is_empty) {
+            printf("Error: Directory '%s' is not empty.\n", filename);
+            return;
+        }
+    }
+
+    int current_block = file->first_block;
+    while (current_block != MY_EOF) {
+        int next_block = FAT[current_block];
+        FAT[current_block] = FAT_FREE;
+        current_block = next_block;
+    }
+
+    memset(file, 0, sizeof(FileEntry));
+    sync_fs();
+}
+
 /* ===== DIRECTORY FUNCTION ===== */
 
 int create_dir(const char *dirname) {
