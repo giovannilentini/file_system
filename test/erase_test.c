@@ -7,6 +7,7 @@ int main() {
 
     printf("\n********************\ncurrent dir: root\n\n");
     create_dir("erase_test_dir");
+    erase_file("dir 10");
     ls_dir();
     printf("********************\n");
 
@@ -57,7 +58,7 @@ int main() {
 
     //change_dir("full_dir");
     //change_dir("full_dir_2");
-    ls_dir();
+    //ls_dir();
 
     return 0;
 }

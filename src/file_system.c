@@ -119,6 +119,20 @@ void erase_disk() {
 
 int create_file(const char *filename) {
     int current_block = current_dir_index;
+
+    while (current_block != MY_EOF) {
+        FileEntry *current_dir = (FileEntry *)(data_blocks + current_block * BLOCK_SIZE);
+        for (int i = 0; i < BLOCK_SIZE / sizeof(FileEntry); i++) {
+            FileEntry *entry = current_dir + i;
+            if (strcmp(entry->name, filename) == 0) {
+                printf("Error: File or Directory with the name '%s' already exists.\n", filename);
+                return -1;
+            }
+        }
+        current_block = FAT[current_block];
+    }
+
+    current_block = current_dir_index;
     int last_block = current_dir_index;
 
     while (current_block != MY_EOF) {
@@ -369,6 +383,20 @@ void erase_file(const char *filename) {
 
 int create_dir(const char *dirname) {
     int current_block = current_dir_index;
+
+    while (current_block != MY_EOF) {
+        FileEntry *current_dir = (FileEntry *)(data_blocks + current_block * BLOCK_SIZE);
+        for (int i = 0; i < BLOCK_SIZE / sizeof(FileEntry); i++) {
+            FileEntry *entry = current_dir + i;
+            if (strcmp(entry->name, dirname) == 0) {
+                printf("Error: File or Directory with the name '%s' already exists.\n", dirname);
+                return -1;
+            }
+        }
+        current_block = FAT[current_block];
+    }
+
+    current_block = current_dir_index;
     int last_block = current_dir_index;
 
     while (current_block != MY_EOF) {
