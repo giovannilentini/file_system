@@ -25,14 +25,14 @@ int main() {
     create_file("1.txt");
     create_file("2.txt");
     create_file("3.txt");
-    create_dir("empty_dir_2");
+    create_dir("empty_dir_2"); 
     create_dir("full_dir_2");
     ls_dir();
     printf("********************\n");
 
     change_dir("full_dir_2");
-    create_file("1.txt");
-    create_file("2.txt");
+    create_file("11.txt");
+    create_file("22.txt");
 
     change_dir("..");
     change_dir("..");
@@ -51,14 +51,14 @@ int main() {
 
     printf("\nls before delete 'full_dir'\n\n");
     ls_dir();
-    //erase_dir_recursive("full_dir");
+    erase_dir_recursive("full_dir");
     printf("\nls after delete 'full_dir'\n\n");
     ls_dir();
     printf("********************\n\n");
 
-    //change_dir("full_dir");
-    //change_dir("full_dir_2");
-    //ls_dir();
+    change_dir("full_dir");
+    change_dir("full_dir_2");
+    ls_dir();
 
     return 0;
 }
