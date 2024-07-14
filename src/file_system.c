@@ -478,26 +478,22 @@ int find_file_entry_handle(const char *name, int dir_block) {
 }
 
 int erase_file_handle(const char *filename) {
-    int file_entry_index = find_file_entry(filename, current_dir_index);
+    int file_entry_index = find_file_entry_handle(filename, current_dir_index);
     if (file_entry_index == -1) {
-        printf("Error: File '%s' not found.\n", filename);
         return -1;
     }
 
-    // Mark the file as free in the FAT and clear its entry
     int block_index = file_entry_index / (BLOCK_SIZE / sizeof(FileEntry));
     FileEntry *file = (FileEntry *)(data_blocks + block_index * BLOCK_SIZE + 
                       (file_entry_index % (BLOCK_SIZE / sizeof(FileEntry))) * sizeof(FileEntry));
 
-    // Free the blocks used by the file
     int current_block = file->first_block;
     while (current_block != MY_EOF) {
         int next_block = FAT[current_block];
-        FAT[current_block] = FAT_FREE;  // Mark the block as free
+        FAT[current_block] = FAT_FREE;
         current_block = next_block;
     }
 
-    // Clear the file entry
     memset(file, 0, sizeof(FileEntry));
     sync_fs();
 
@@ -505,10 +501,8 @@ int erase_file_handle(const char *filename) {
 }
 
 int erase_dir_recursive(const char *dirname) {
-    // Find the directory entry
-    int dir_entry_index = find_file_entry(dirname, current_dir_index);
+    int dir_entry_index = find_file_entry_handle(dirname, current_dir_index);
     if (dir_entry_index == -1) {
-        printf("Error: Directory '%s' not found.\n", dirname);
         return -1;
     }
 
@@ -523,7 +517,6 @@ int erase_dir_recursive(const char *dirname) {
         return -1;
     }
 
-    // Recursively remove contents of the directory
     int current_block = dir->first_block;
 
     while (current_block != MY_EOF) {
@@ -531,10 +524,8 @@ int erase_dir_recursive(const char *dirname) {
             FileEntry *entry = (FileEntry *)(data_blocks + current_block * BLOCK_SIZE + i * sizeof(FileEntry));
             if (entry->name[0] != '\0') {
                 if (entry->is_directory) {
-                    // Recursively remove subdirectories
                     erase_dir_recursive(entry->name);
                 } else {
-                    // Remove files
                     erase_file_handle(entry->name);
                 }
             }
@@ -542,7 +533,6 @@ int erase_dir_recursive(const char *dirname) {
         current_block = FAT[current_block];
     }
 
-    // After removing all files, remove the directory entry itself
     return erase_file_handle(dirname);
 }
 
