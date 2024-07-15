@@ -3,8 +3,7 @@
 #include "../include/file_system.h"
 
 int main() {
-    init("bin/test_disk2.img");
-    erase_disk();
+    init("bin/test_disk.img");
 
     char buf[2048];
 
