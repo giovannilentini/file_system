@@ -70,6 +70,35 @@ int find_file_entry(const char *name, int dir_block) {
     return -1;
 }
 
+int is_empty(char* dirname) {
+    int file_entry_index = find_file_entry(dirname, current_dir_index);
+    if (file_entry_index == -1) {
+        return -1;
+    }
+
+    FileEntry *file = (FileEntry *)(
+        data_blocks +                             // Start of the memory region
+        (file_entry_index / (BLOCK_SIZE / sizeof(FileEntry))) * BLOCK_SIZE +  // Offset to the start of the block
+        (file_entry_index % (BLOCK_SIZE / sizeof(FileEntry))) * sizeof(FileEntry) // Offset within the block
+    );
+
+    int dir_block = file->first_block;
+    int is_empty = 1;
+
+    while (dir_block != MY_EOF && is_empty) {
+        for (int i = 0; i < BLOCK_SIZE / sizeof(FileEntry); i++) {
+            FileEntry *entry = (FileEntry *)(data_blocks + dir_block * BLOCK_SIZE + i * sizeof(FileEntry));
+            if (entry->name[0] != '\0') {
+                is_empty = 0;
+                break;
+            }
+        }
+        dir_block = FAT[dir_block];
+    }
+
+    return is_empty;
+}
+
 /* ===== DISK FUNCTION ===== */
 
 void init(const char *name) {
@@ -350,10 +379,10 @@ int seek(const char *filename, int position) {
     return 0;
 }
 
-void erase_file(const char *filename) {
+int erase_file(const char *filename) {
     int file_entry_index = find_file_entry(filename, current_dir_index);
     if (file_entry_index == -1) {
-        return;
+        return -1;
     }
 
     FileEntry *file = (FileEntry *)(
@@ -363,23 +392,9 @@ void erase_file(const char *filename) {
     );
 
     if (file->is_directory) {
-        int dir_block = file->first_block;
-        int is_empty = 1;
-
-        while (dir_block != MY_EOF && is_empty) {
-            for (int i = 0; i < BLOCK_SIZE / sizeof(FileEntry); i++) {
-                FileEntry *entry = (FileEntry *)(data_blocks + dir_block * BLOCK_SIZE + i * sizeof(FileEntry));
-                if (entry->name[0] != '\0') {
-                    is_empty = 0;
-                    break;
-                }
-            }
-            dir_block = FAT[dir_block];
-        }
-
-        if (!is_empty) {
+        if (!is_empty(file->name)) {
             printf("Error: Directory '%s' is not empty.\n", filename);
-            return;
+            return -1;
         }
     }
 
@@ -392,6 +407,7 @@ void erase_file(const char *filename) {
 
     memset(file, 0, sizeof(FileEntry));
     sync_fs();
+    return 0;
 }
 
 /* ===== DIRECTORY FUNCTION ===== */
@@ -459,57 +475,16 @@ int create_dir(const char *dirname) {
     return 0;
 }
 
-int find_file_entry_handle(const char *name, int dir_block) {
-    int block = dir_block;
-
-    while (block != MY_EOF) {
-        for (int i = 0; i < BLOCK_SIZE / sizeof(FileEntry); i++) {
-            FileEntry *entry = (FileEntry *)(data_blocks + block * BLOCK_SIZE + i * sizeof(FileEntry));
-
-            if (entry->first_block != FAT_FREE && strcmp(entry->name, name) == 0) {
-                return block * (BLOCK_SIZE / sizeof(FileEntry)) + i;
-            }
-        }
-
-        block = FAT[block];
-    }
-
-    return -1;
-}
-
-int erase_file_handle(const char *filename) {
-    int file_entry_index = find_file_entry_handle(filename, current_dir_index);
-    if (file_entry_index == -1) {
-        return -1;
-    }
-
-    int block_index = file_entry_index / (BLOCK_SIZE / sizeof(FileEntry));
-    FileEntry *file = (FileEntry *)(data_blocks + block_index * BLOCK_SIZE + 
-                      (file_entry_index % (BLOCK_SIZE / sizeof(FileEntry))) * sizeof(FileEntry));
-
-    int current_block = file->first_block;
-    while (current_block != MY_EOF) {
-        int next_block = FAT[current_block];
-        FAT[current_block] = FAT_FREE;
-        current_block = next_block;
-    }
-
-    memset(file, 0, sizeof(FileEntry));
-    sync_fs();
-
-    return 0;
-}
-
 int erase_dir_recursive(const char *dirname) {
-    int dir_entry_index = find_file_entry_handle(dirname, current_dir_index);
+    int dir_entry_index = find_file_entry(dirname, current_dir_index);
     if (dir_entry_index == -1) {
         return -1;
     }
 
     FileEntry *dir = (FileEntry *)(
-        data_blocks +
-        (dir_entry_index / (BLOCK_SIZE / sizeof(FileEntry))) * BLOCK_SIZE +
-        (dir_entry_index % (BLOCK_SIZE / sizeof(FileEntry))) * sizeof(FileEntry)
+        data_blocks +                             // Start of the memory region
+        (dir_entry_index / (BLOCK_SIZE / sizeof(FileEntry))) * BLOCK_SIZE +  // Offset to the start of the block
+        (dir_entry_index % (BLOCK_SIZE / sizeof(FileEntry))) * sizeof(FileEntry) // Offset within the block
     );
 
     if (!dir->is_directory) {
@@ -519,22 +494,36 @@ int erase_dir_recursive(const char *dirname) {
 
     int current_block = dir->first_block;
 
+    int temp_dir_index = current_dir_index;
+    current_dir_index = dir->first_block;
+
     while (current_block != MY_EOF) {
+        FileEntry *current_dir = (FileEntry *)(data_blocks + current_block * BLOCK_SIZE);
         for (int i = 0; i < BLOCK_SIZE / sizeof(FileEntry); i++) {
-            FileEntry *entry = (FileEntry *)(data_blocks + current_block * BLOCK_SIZE + i * sizeof(FileEntry));
-            if (entry->name[0] != '\0') {
-                if (entry->is_directory) {
-                    erase_dir_recursive(entry->name);
-                } else {
-                    erase_file_handle(entry->name);
-                }
+            FileEntry *entry = current_dir + i;
+            if (entry->name[0] == '\0') {
+                continue;
+            }
+
+            int res;
+            if (entry->is_directory) {
+                res = erase_dir_recursive(entry->name);
+                if (res == -1) return -1;
+            } else {
+                res = erase_file(entry->name);
+                if (res == -1) return -1;
             }
         }
         current_block = FAT[current_block];
     }
 
-    return erase_file_handle(dirname);
+    current_dir_index = temp_dir_index;
+
+    erase_file(dirname);
+    sync_fs();
+    return 0;
 }
+
 
 int change_dir(const char *dirname) {
     if (strcmp(dirname, "..") == 0) {
@@ -598,5 +587,4 @@ void ls_dir() {
         current_block = FAT[current_block];
     }
 
-    //print_all_entries();
 }

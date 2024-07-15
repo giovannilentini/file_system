@@ -8,6 +8,14 @@ int main() {
     printf("\n********************\ncurrent dir: root\n\n");
     create_dir("erase_test_dir");
     erase_file("dir 10");
+    change_dir("dir 11");
+    create_file("file_1_dir_11.txt");
+    change_dir("..");
+    erase_file("dir 11");
+    change_dir("dir 11");
+    erase_file("file_1_dir_11.txt");
+    change_dir("..");
+    erase_file("dir 11");
     ls_dir();
     printf("********************\n");
 
@@ -33,6 +41,10 @@ int main() {
     change_dir("full_dir_2");
     create_file("11.txt");
     create_file("22.txt");
+    create_dir("ciao");
+    change_dir("ciao");
+    create_file("reqr");
+    change_dir("..");
 
     change_dir("..");
     change_dir("..");

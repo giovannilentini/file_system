@@ -92,10 +92,11 @@ int seek(const char *filename, int offset);
 
 /*
     Erases a file or an empty dir by freeing its blocks in the FAT and clearing is entry.
+    Returns 0 on success, -1 on failure.
 
     filename: name of the file or directory to delete.
 */
-void erase_file(const char *filename);
+int erase_file(const char *filename);
 
 /*
     Creates a new directory with the specified name. Returns the
