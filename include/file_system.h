@@ -15,14 +15,6 @@ typedef struct {
 } FileEntry;
 
 /*
-    Finds the index of a file or directory in the current directory.
-    returns the index of the file or directory, or -1 if not found.
-    
-    name: The name of the file or directory to find.
-*/
-int find_file_index(const char *name);
-
-/*
     Initializes the file system, setting up the FAT, 
     file entries, and data blocks in an mmapped file.
 
@@ -45,9 +37,9 @@ int get_current_dir();
     Gets the File Control Block (FCB) for the specified file index.
     Returns the pointer to the FileEntry structure for the file.
 
-    file_index: The index of the file.
+    name: The name of the file or directory.
 */
-FileEntry* open_file_entry(int file_index);
+FileEntry* open_file_entry(const char* name);
 
 /*
     Creates a new file with the specified name. Returns the 

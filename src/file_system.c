@@ -100,6 +100,28 @@ int is_empty(char* dirname) {
     return is_empty;
 }
 
+FileEntry* open_file_entry(const char* name) {
+    int current_block = current_dir_index;
+
+    while (current_block != MY_EOF) {
+        FileEntry* current_dir = (FileEntry*)(data_blocks + current_block * BLOCK_SIZE);
+
+        for (int i = 0; i < BLOCK_SIZE / sizeof(FileEntry); i++) {
+            FileEntry* entry = &current_dir[i];
+
+            if (entry->name[0] != '\0' && strcmp(entry->name, name) == 0) {
+                return entry;
+            }
+        }
+
+        current_block = FAT[current_block];
+    }
+
+    printf("Error: File or Directory '%s' not found in the current directory.\n", name);
+    return NULL;
+}
+
+
 /* ===== DISK FUNCTION ===== */
 
 void init(const char *name) {
