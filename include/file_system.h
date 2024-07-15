@@ -130,3 +130,21 @@ void ls_dir();
     dirname: name of the direcorty to delete.
 */
 int erase_dir_recursive(const char *dirname);
+
+/*
+    Copies a file from the main filesystem to the custom filesystem.
+    Returns 0 on success, or -1 on failure.
+
+    source_filepath: The path of the source file to copy;
+    destination_filename: The name of the file to create in the custom filesystem.
+*/
+int copy_to_my_fs(const char *source_filepath, const char *destination_filename);
+
+/*
+    Copies a file from the custom filesystem to the main filesystem.
+    Returns 0 on success, or -1 on failure.
+
+    source_filename: The name of the file to copy from the custom filesystem;
+    destination_filepath: The path where the file should be saved in the main filesystem.
+*/
+int copy_from_my_fs(const char *source_filename, const char *destination_filepath);

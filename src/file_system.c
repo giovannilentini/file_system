@@ -4,6 +4,7 @@
 #include <sys/mman.h>
 #include <fcntl.h>
 #include <unistd.h>
+#include <sys/stat.h>
 
 #include "../include/file_system.h"
 
@@ -587,4 +588,76 @@ void ls_dir() {
         current_block = FAT[current_block];
     }
 
+}
+
+/* ===== COPY FUNCTION ===== */
+
+int copy_to_my_fs(const char *source_filepath, const char *destination_filename) {
+    int file_entry_index = find_file_entry(destination_filename, current_dir_index);
+    if (file_entry_index == -1) {
+        return -1;
+    }
+
+    FileEntry *file = (FileEntry *)(
+        data_blocks +                             // Start of the memory region
+        (file_entry_index / (BLOCK_SIZE / sizeof(FileEntry))) * BLOCK_SIZE +  // Offset to the start of the block
+        (file_entry_index % (BLOCK_SIZE / sizeof(FileEntry))) * sizeof(FileEntry) // Offset within the block
+    );
+
+    int fd = open(source_filepath, O_RDONLY, 0666);
+    if (fd == -1) {
+        printf("Error: File not found in the main file system\n");
+    }
+
+    struct stat file_stat;
+    if (stat(source_filepath, &file_stat) == -1) {
+        perror("Error stat in copy_to_my_fs");
+        close(fd);
+        exit(1);
+    }
+
+    int file_size = file_stat.st_size;
+    char buf[file_size];
+    if (read(fd, buf, file_size) == -1) {
+        perror("Error read in copy_to_my_fs");
+    }
+    buf[file_size-1] = '\0';
+
+    seek(destination_filename, 0);
+    write_file(destination_filename, buf, file_size);
+    file->size = file_size;
+
+    return 0;
+}
+
+int copy_from_my_fs(const char *source_filename, const char *destination_filepath) {
+    int file_entry_index = find_file_entry(source_filename, current_dir_index);
+    if (file_entry_index == -1) {
+        return -1;
+    }
+
+    FileEntry *file = (FileEntry *)(
+        data_blocks +                             // Start of the memory region
+        (file_entry_index / (BLOCK_SIZE / sizeof(FileEntry))) * BLOCK_SIZE +  // Offset to the start of the block
+        (file_entry_index % (BLOCK_SIZE / sizeof(FileEntry))) * sizeof(FileEntry) // Offset within the block
+    );
+
+    int fd = open(destination_filepath, O_WRONLY | O_TRUNC , 0666);
+    if (fd == -1) {
+        printf("Error: File not found in the main file system\n");
+        return -1;
+    }
+
+    int file_size = file->size;
+    char buf[file_size];
+    seek(source_filename, 0);
+    read_file(source_filename, buf, file_size);
+    buf[file_size] = '\0';
+
+    if (write(fd, buf, strlen(buf)) == -1) {
+        perror("Error write in copy_from_my_fs");
+        return -1;
+    }
+
+    return 0;
 }
