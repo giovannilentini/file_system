@@ -25,7 +25,7 @@ The file system includes the following key features:
 
 ## How to Use
 
-To view and test the functionality of the file system, you can run the `fs.sh` script. If you prefer to compile and execute manually:
+To view and test the functionality of the file system, you can run the `fs.sh` script using the command 'bash fs.sh'. If you prefer to compile and execute manually:
 
 1. Run `make` from the project's main directory.
 2. The resulting executables will be located in the `test` folder:

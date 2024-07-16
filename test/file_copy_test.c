@@ -19,6 +19,5 @@ int main() {
     create_file("write_test.txt");
     write_file("write_test.txt", "Ciaooooooooooooooo Scrivo\nTest\nAh Boh", 2048);
     copy_from_my_fs("write_test.txt", "test/write_test.txt");
-    ls_dir();
     printf("********************\n");
 }

@@ -33,6 +33,14 @@ test4() {
 }
 
 test5() {
+    if ! ./bin/file_copy_test; then
+        handle_error
+    else
+        echo -e '\n\033[1;32mTest 5 completed: Directory and file deletion successfully executed.\033[0m\n'
+    fi
+}
+
+test6() {
     if ! ./bin/dir_test || ! ./bin/write_read_test || ! ./bin/seek_test || ! ./bin/erase_test; then
         handle_error
     else
@@ -89,7 +97,8 @@ test() {
         echo "2. File write and read (recommended only if test 1 has been executed)"
         echo "3. File write and read with seek (recommended only if test 1 has been executed)"
         echo "4. Directory and file deletion (recommended only if test 1 has been executed)"
-        echo "5. All tests"
+        echo "5. Copy from host and copy to host functions"
+        echo "6. All tests"
         echo "q. Quit"
         read -p "Enter your choice: " test_choice
 
@@ -99,6 +108,7 @@ test() {
             3) test3 ;;
             4) test4 ;;
             5) test5 ;;
+            6) test6 ;;
             q)
                 echo -e '\n\033[1;32mQuitting ...\033[0m\n'
                 break
