@@ -21,11 +21,13 @@ The file system includes the following key features:
 ### Additional Utilities:
 
 - Initialization and formatting of the disk (`init`, `erase_disk`).
+- Copying files from the host file system to the FAT file system and vice versa (`copy_from_host`, `copy_to_host`).
 - Execution of commands via an interactive shell (`main_shell`).
 
 ## How to Use
 
-To view and test the functionality of the file system, you can run the `fs.sh` script using the command 'bash fs.sh'. If you prefer to compile and execute manually:
+To view and test the functionality of the file system, you can run the `fs.sh` script using the command 
+`bash fs.sh`. If you prefer to compile and execute manually:
 
 1. Run `make` from the project's main directory.
 2. The resulting executables will be located in the `test` folder:
@@ -34,6 +36,7 @@ To view and test the functionality of the file system, you can run the `fs.sh` s
    - `./write_read_test`: Tests write and read operations.
    - `./seek_test`: Tests seek operation.
    - `./erase_test`: Tests file and directory deletion.
+   - `./file_copy_test`: Tests file copy operations between the host file system and the FAT file system.
 
 Additionally, an interactive command-line interface (`main_shell`) is available in the `shell` folder, allowing interaction with the file system by executing commands directly from the console.
 
@@ -44,7 +47,3 @@ To remove the generated executables during compilation, execute:
 ```bash
 make clean
 ```
-
-## Contributions
-
-This project was developed as part of an educational exercise to understand the fundamentals of file systems and the low-level operations involved in their implementation.
