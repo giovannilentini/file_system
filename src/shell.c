@@ -122,13 +122,12 @@ void my_write(int argc, char* argv[MAX_ARGC + 1]) {
 
     char *filename = argv[1];
 
-    FileEntry *file_entry = open_file_entry(filename);
-    if (!file_entry) {
-        printf("Error: file not found.\n");
+    FileEntry *file = open_file_entry(filename);
+    if (file == NULL) {
         return;
     }
 
-    if (file_entry->is_directory) {
+    if (file->is_directory) {
         printf("Error: cannot write a directory.\n");
         return;
     }
@@ -156,7 +155,11 @@ void my_read(int argc, char* argv[MAX_ARGC + 1]) {
     }
 
     char *filename = argv[1];
+
     FileEntry *file = open_file_entry(filename);
+    if (file == NULL) {
+        return;
+    } 
 
     if (file->is_directory) {
         printf("Error: cannot read a directory.\n");
