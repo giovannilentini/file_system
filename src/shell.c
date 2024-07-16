@@ -309,18 +309,15 @@ void help(int argc, char* argv[MAX_ARGC + 1]) {
 
 void do_command() {
     while (1) {
-        
         char* argv[MAX_ARGC+1];
 
         printf("%s> ", get_current_dir_name());
         fgets(command, MAX_COMMAND_LEN, stdin);
         
-    
         argv[0] = strtok(command, " ");
         argv[1] = strtok(NULL, "\n");
 
         int argc = (argv[1] == NULL) ? 1 : 2;
-
         if (argv[1] == NULL) {
             argv[0][strlen(argv[0]) - 1] = 0;
         }

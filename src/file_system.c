@@ -274,6 +274,7 @@ int create_file(const char *filename) {
     strcpy(new_file->name, filename);
     new_file->is_directory = 0;
     new_file->first_block = allocate_block();
+    new_file->current_position = 0;
     if (new_file->first_block == -1) {
         printf("Error: No free blocks available.\n");
         return -1;
@@ -450,11 +451,9 @@ int erase_file(const char *filename) {
         (file_entry_index % (BLOCK_SIZE / sizeof(FileEntry))) * sizeof(FileEntry) // Offset within the block
     );
 
-    if (file->is_directory) {
-        if (!is_empty(file->name)) {
-            printf("Error: Directory '%s' is not empty.\n", filename);
-            return -1;
-        }
+    if (file->is_directory && !is_empty(file->name)) {
+        printf("Error: Directory '%s' is not empty.\n", filename);
+        return -1;
     }
 
     int current_block = file->first_block;
@@ -650,7 +649,6 @@ void ls_dir() {
 }
 
 /* ===== COPY FUNCTION ===== */
-
 
 int copy_to_my_fs(const char *source_filepath, const char *destination_filename) {
     char* expanded_source_filepath = expand_path(source_filepath);
