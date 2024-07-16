@@ -17,9 +17,13 @@ void ls(int argc, char* argv[MAX_ARGC + 1]);
 
 void cd(int argc, char* argv[MAX_ARGC + 1]);
 
-void write(int argc, char* argv[MAX_ARGC + 1]);
+void my_write(int argc, char* argv[MAX_ARGC + 1]);
 
-void read(int argc, char* argv[MAX_ARGC + 1]);
+void my_read(int argc, char* argv[MAX_ARGC + 1]);
+
+void copy_from_host(int argc, char* argv[MAX_ARGC + 1]);
+
+void copy_to_host(int argc, char* argv[MAX_ARGC + 1]);
 
 void clear(int argc, char* argv[MAX_ARGC + 1]);
 

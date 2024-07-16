@@ -5,6 +5,7 @@
 #include <fcntl.h>
 #include <unistd.h>
 #include <sys/stat.h>
+#include <pwd.h>
 
 #include "../include/file_system.h"
 
@@ -14,6 +15,26 @@ char *data_blocks;
 int current_dir_index = 0;
 
 /* ===== HANDLE FUNCTION ===== */
+
+char* expand_path(const char* path) {
+    if (path[0] == '~') {
+        const char* home = getenv("HOME");
+        if (!home) {
+            struct passwd* pw = getpwuid(getuid());
+            home = pw->pw_dir;
+        }
+        char* expanded_path = malloc(strlen(home) + strlen(path));
+        if (!expanded_path) {
+            fprintf(stderr, "Error: memory allocation failed\n");
+            exit(1);
+        }
+        strcpy(expanded_path, home);
+        strcat(expanded_path, path + 1);
+        return expanded_path;
+    } else {
+        return strdup(path);
+    }
+}
 
 void print_all_entries() {
     printf("Listing all non-empty entries:\n");
@@ -101,7 +122,6 @@ int is_empty(char* dirname) {
 }
 
 const char* get_current_dir_name() {
-
     for (int block = 0; block < MAX_BLOCKS; block++) {
         if (FAT[block] != FAT_FREE) {
             for (int i = 0; i < BLOCK_SIZE / sizeof(FileEntry); i++) {
@@ -563,7 +583,6 @@ int erase_dir_recursive(const char *dirname) {
     return 0;
 }
 
-
 int change_dir(const char *dirname) {
     if (strcmp(dirname, "..") == 0) {
         if (current_dir_index == 0) {
@@ -632,9 +651,13 @@ void ls_dir() {
 
 /* ===== COPY FUNCTION ===== */
 
+
 int copy_to_my_fs(const char *source_filepath, const char *destination_filename) {
+    char* expanded_source_filepath = expand_path(source_filepath);
+    
     int file_entry_index = find_file_entry(destination_filename, current_dir_index);
     if (file_entry_index == -1) {
+        free(expanded_source_filepath);
         return -1;
     }
 
@@ -644,35 +667,55 @@ int copy_to_my_fs(const char *source_filepath, const char *destination_filename)
         (file_entry_index % (BLOCK_SIZE / sizeof(FileEntry))) * sizeof(FileEntry) // Offset within the block
     );
 
-    int fd = open(source_filepath, O_RDONLY, 0666);
+    int fd = open(expanded_source_filepath, O_RDONLY);
     if (fd == -1) {
         printf("Error: File not found in the main file system\n");
+        free(expanded_source_filepath);
+        return -1;
     }
 
     struct stat file_stat;
-    if (stat(source_filepath, &file_stat) == -1) {
+    if (stat(expanded_source_filepath, &file_stat) == -1) {
         perror("Error stat in copy_to_my_fs");
         close(fd);
-        exit(1);
+        free(expanded_source_filepath);
+        return -1;
     }
 
     int file_size = file_stat.st_size;
-    char buf[file_size];
+    char *buf = malloc(file_size);
+    if (buf == NULL) {
+        perror("Error allocating buffer in copy_to_my_fs");
+        close(fd);
+        free(expanded_source_filepath);
+        return -1;
+    }
+
     if (read(fd, buf, file_size) == -1) {
         perror("Error read in copy_to_my_fs");
+        close(fd);
+        free(buf);
+        free(expanded_source_filepath);
+        return -1;
     }
-    buf[file_size-1] = '\0';
+    close(fd);
 
     seek(destination_filename, 0);
     write_file(destination_filename, buf, file_size);
     file->size = file_size;
 
+    free(buf);
+    free(expanded_source_filepath);
+
     return 0;
 }
 
 int copy_from_my_fs(const char *source_filename, const char *destination_filepath) {
+    char* expanded_destination_filepath = expand_path(destination_filepath);
+
     int file_entry_index = find_file_entry(source_filename, current_dir_index);
     if (file_entry_index == -1) {
+        free(expanded_destination_filepath);
         return -1;
     }
 
@@ -682,22 +725,36 @@ int copy_from_my_fs(const char *source_filename, const char *destination_filepat
         (file_entry_index % (BLOCK_SIZE / sizeof(FileEntry))) * sizeof(FileEntry) // Offset within the block
     );
 
-    int fd = open(destination_filepath, O_WRONLY | O_TRUNC , 0666);
+    int fd = open(expanded_destination_filepath, O_WRONLY | O_TRUNC | O_CREAT, 0666);
     if (fd == -1) {
         printf("Error: File not found in the main file system\n");
+        free(expanded_destination_filepath);
         return -1;
     }
 
     int file_size = file->size;
-    char buf[file_size];
-    seek(source_filename, 0);
-    read_file(source_filename, buf, file_size);
-    buf[file_size] = '\0';
-
-    if (write(fd, buf, strlen(buf)) == -1) {
-        perror("Error write in copy_from_my_fs");
+    char *buf = malloc(file_size);
+    if (buf == NULL) {
+        perror("Error allocating buffer in copy_from_my_fs");
+        close(fd);
+        free(expanded_destination_filepath);
         return -1;
     }
+
+    seek(source_filename, 0);
+    read_file(source_filename, buf, file_size);
+
+    if (write(fd, buf, file_size) == -1) {
+        perror("Error write in copy_from_my_fs");
+        close(fd);
+        free(buf);
+        free(expanded_destination_filepath);
+        return -1;
+    }
+
+    close(fd);
+    free(buf);
+    free(expanded_destination_filepath);
 
     return 0;
 }

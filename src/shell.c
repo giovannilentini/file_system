@@ -7,6 +7,35 @@
 
 char command[MAX_COMMAND_LEN];
 
+/* ===== Handle Function ===== */
+
+char* read_input(const char* prompt) {
+    printf("%s", prompt);
+    size_t size = 1024;
+    size_t len = 0;
+    char* buffer = malloc(size);
+    if (!buffer) {
+        printf("Error: memory allocation failed.\n");
+        return NULL;
+    }
+    int c;
+    while ((c = getchar()) != '\n' && c != EOF) {
+        if (len + 1 >= size) {
+            size *= 2;
+            buffer = realloc(buffer, size);
+            if (!buffer) {
+                printf("Error: memory allocation failed.\n");
+                return NULL;
+            }
+        }
+        buffer[len++] = c;
+    }
+    buffer[len] = '\0';
+    return buffer;
+}
+
+/* ===== End =====*/
+
 void format(int argc, char* argv[MAX_ARGC + 1]) {
 
     if (argc != 1) {
@@ -84,7 +113,7 @@ void cd(int argc, char* argv[MAX_ARGC + 1]) {
     change_dir(argv[1]);
 }
 
-void write(int argc, char* argv[MAX_ARGC + 1]) {
+void my_write(int argc, char* argv[MAX_ARGC + 1]) {
     if (argc != 2) {
         printf("Error: wrong number of parameters.\n");
         printf("Usage: write <filename>\n");
@@ -92,8 +121,8 @@ void write(int argc, char* argv[MAX_ARGC + 1]) {
     }
 
     char *filename = argv[1];
-    FileEntry* file_entry = open_file_entry(filename);
-    
+
+    FileEntry *file_entry = open_file_entry(filename);
     if (!file_entry) {
         printf("Error: file not found.\n");
         return;
@@ -104,42 +133,21 @@ void write(int argc, char* argv[MAX_ARGC + 1]) {
         return;
     }
 
-    int position;
     printf("Enter starting point: ");
+    int position;
     scanf("%d", &position);
     getchar();
 
     if (seek(filename, position) < 0) return;
 
-    printf("Enter text: ");
-    
-    int size = 0;
-    int capacity = 1024;
-    char* str = malloc(capacity);
-    if (!str) {
-        printf("Error: memory allocation failed.\n");
-        return;
-    }
+    char* str = read_input("Enter text: ");
+    if (!str) return;
 
-    int c;
-    while ((c = getchar()) != '\n' && c != EOF) {
-        if (size + 1 >= capacity) {
-            capacity *= 2;
-            str = realloc(str, capacity);
-            if (!str) {
-                printf("Error: memory allocation failed.\n");
-                return;
-            }
-        }
-        str[size++] = c;
-    }
-    str[size] = '\0';
-
-    write_file(filename, str, size);
+    write_file(filename, str, strlen(str));
     free(str);
 }
 
-void read(int argc, char* argv[MAX_ARGC + 1]) {
+void my_read(int argc, char* argv[MAX_ARGC + 1]) {
 
     if (argc != 2) {
         printf("Error: wrong number of parameters \n");
@@ -167,6 +175,62 @@ void read(int argc, char* argv[MAX_ARGC + 1]) {
     read_file(filename, str, file->size);
     printf("%s\n", str);
     
+}
+
+void copy_from_host(int argc, char* argv[MAX_ARGC + 1]) {
+    if (argc != 1) {
+        printf("Error: wrong number of parameters.\n");
+        printf("Usage: clear\n");
+        return;
+    }
+
+    char* fat_fs_filename = read_input("Enter the name of the file on the FAT file system: ");
+    if (!fat_fs_filename) {
+        return;
+    }
+
+    char* host_fs_path = read_input("Enter the path of the file on the host file system: ");
+    if (!host_fs_path) {
+        free(fat_fs_filename);
+        return;
+    }
+
+    printf("FAT FS File: %s\n", fat_fs_filename);
+    printf("Host FS Path: %s\n", host_fs_path);
+
+    copy_to_my_fs(host_fs_path, fat_fs_filename);
+
+    free(fat_fs_filename);
+    free(host_fs_path);
+    return;
+}
+
+void copy_to_host(int argc, char* argv[MAX_ARGC + 1]) {
+    if (argc != 1) {
+        printf("Error: wrong number of parameters.\n");
+        printf("Usage: clear\n");
+        return;
+    }
+
+    char* fat_fs_filename = read_input("Enter the name of the file on the FAT file system: ");
+    if (!fat_fs_filename) {
+        return;
+    }
+
+    char* host_fs_path = read_input("Enter the path of the file on the host file system: ");
+    if (!host_fs_path) {
+        free(fat_fs_filename);
+        return;
+    }
+
+    printf("FAT FS File: %s\n", fat_fs_filename);
+    printf("Host FS Path: %s\n", host_fs_path);
+
+    copy_from_my_fs(fat_fs_filename, host_fs_path);
+
+    free(fat_fs_filename);
+    free(host_fs_path);
+    return;
 }
 
 void clear(int argc, char* argv[MAX_ARGC + 1]) {
@@ -226,11 +290,19 @@ void help(int argc, char* argv[MAX_ARGC + 1]) {
     printf("    Usage: read <filename>\n");
     printf("    Description: Reads from the specified file starting at a specified position.\n\n");
 
-    printf("10. clear\n");
+    printf("10. cp_from_host\n");
+    printf("    Usage: cp_from_host\n");
+    printf("    Description: Copies a file from the host file system to the FAT file system.\n\n");
+
+    printf("11. cp_to_host\n");
+    printf("    Usage: cp_to_host\n");
+    printf("    Description: Copies a file from the FAT file system to the host file system.\n\n");
+
+    printf("12. clear\n");
     printf("    Usage: clear\n");
     printf("    Description: Clears the terminal screen.\n\n");
 
-    printf("11. help\n");
+    printf("13. help\n");
     printf("    Usage: help\n");
     printf("    Description: Displays this help message.\n\n");
 }
@@ -268,14 +340,18 @@ void do_command() {
         } else if (strcmp(argv[0], "cd") == 0) {
             cd(argc, argv);
         } else if (strcmp(argv[0], "write") == 0) {
-            write(argc, argv);
+            my_write(argc, argv);
         } else if (strcmp(argv[0], "read") == 0) {
-            read(argc, argv);
+            my_read(argc, argv);
         } else if (strcmp(argv[0], "clear") == 0) {
             clear(argc, argv);
         } else if (strcmp(argv[0], "help") == 0) {
             help(argc, argv);
-        }  else if (strcmp(argv[0], "exit") == 0 || strcmp(argv[0], "quit") == 0) {
+        } else if (strcmp(argv[0], "cp_from_host") == 0) {
+            copy_from_host(argc, argv);
+        } else if (strcmp(argv[0], "cp_to_host") == 0) {
+            copy_to_host(argc, argv);
+        } else if (strcmp(argv[0], "exit") == 0 || strcmp(argv[0], "quit") == 0) {
             exit(EXIT_SUCCESS);
         } else {
             printf("Error: %s command not found\n", command);
