@@ -6,7 +6,7 @@
 #include "../include/file_system.h"
 
 char command[MAX_COMMAND_LEN];
-/*
+
 void format(int argc, char* argv[MAX_ARGC + 1]) {
 
     if (argc != 1) {
@@ -92,12 +92,9 @@ void write(int argc, char* argv[MAX_ARGC + 1]) {
         return;
     }
 
-    int file_index = find_file_index(argv[1]);
-    if (file_index < 0) {
-        return;
-    }
+    char *filename = argv[1];
 
-    if (open_file_entry(file_index)->is_directory) {
+    if (open_file_entry(filename)->is_directory) {
         printf("Error: cannot write a directory.\n");
         return;
     }
@@ -108,13 +105,13 @@ void write(int argc, char* argv[MAX_ARGC + 1]) {
     scanf("%d", &position);
     getchar();
 
-    if (seek(argv[1], position) < 0) return;
+    if (seek(filename, position) < 0) return;
     
     printf("Enter text: ");
     char* str = calloc(2048, sizeof(char));
     fgets(str, 2048, stdin);
     //str[strlen(str) - 1] = 0;
-    write_file(argv[1], str, strlen(str)-1);
+    write_file(filename, str, strlen(str)-1);
 }
 
 void read(int argc, char* argv[MAX_ARGC + 1]) {
@@ -125,12 +122,9 @@ void read(int argc, char* argv[MAX_ARGC + 1]) {
         return;
     }
 
-    int file_index = find_file_index(argv[1]);
-    if (file_index < 0) {
-        return;
-    }
+    char *filename = argv[1];
 
-    if (open_file_entry(file_index)->is_directory) {
+    if (open_file_entry(filename)->is_directory) {
         printf("Error: cannot read a directory.\n");
         return;
     }
@@ -141,10 +135,10 @@ void read(int argc, char* argv[MAX_ARGC + 1]) {
     scanf("%d", &position);
     getchar();
 
-    if (seek(argv[1], position) < 0) return;
+    if (seek(filename, position) < 0) return;
  
     char* str = calloc(2048, sizeof(char));
-    read_file(argv[1], str, 2048);
+    read_file(filename, str, 2048);
     printf("%s\n", str);
     
 }
@@ -219,16 +213,11 @@ void do_command() {
     while (1) {
         
         char* argv[MAX_ARGC+1];
-        FileEntry *current_dir_fcb = open_file_entry(get_current_dir());
 
-        if (current_dir_fcb == NULL) {
-            printf("Error: dir not found\n");
-            exit(EXIT_FAILURE);
-        }
-
-        printf("%s> ", current_dir_fcb->name);
-        fgets(command, 128, stdin);
+        printf("%s> ", get_current_dir_name());
+        fgets(command, MAX_COMMAND_LEN, stdin);
         
+    
         argv[0] = strtok(command, " ");
         argv[1] = strtok(NULL, "\n");
 
@@ -267,4 +256,3 @@ void do_command() {
         }
     }
 }
-*/

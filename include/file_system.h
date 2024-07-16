@@ -28,10 +28,10 @@ void init(const char *name);
 void erase_disk();
 
 /*
-    Gets the index of the current working directory.
-    Returns the index of the current working directory.
+    Gets the name of the current working directory.
+    Returns the name of the current working directory.
 */
-int get_current_dir();
+const char* get_current_dir_name();
 
 /*
     Gets the File Control Block (FCB) for the specified file index.

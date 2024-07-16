@@ -100,6 +100,23 @@ int is_empty(char* dirname) {
     return is_empty;
 }
 
+const char* get_current_dir_name() {
+
+    for (int block = 0; block < MAX_BLOCKS; block++) {
+        if (FAT[block] != FAT_FREE) {
+            for (int i = 0; i < BLOCK_SIZE / sizeof(FileEntry); i++) {
+                FileEntry *entry = (FileEntry *)(data_blocks + block * BLOCK_SIZE + i * sizeof(FileEntry));
+
+                if (entry->name[0] != '\0' && entry->is_directory && entry->first_block == current_dir_index) {
+                    return entry->name;
+                }
+            }
+        }
+    }
+
+    return NULL;
+}
+
 FileEntry* open_file_entry(const char* name) {
     int current_block = current_dir_index;
 
@@ -120,7 +137,6 @@ FileEntry* open_file_entry(const char* name) {
     printf("Error: File or Directory '%s' not found in the current directory.\n", name);
     return NULL;
 }
-
 
 /* ===== DISK FUNCTION ===== */
 
@@ -146,7 +162,7 @@ void init(const char *name) {
 
     if (FAT[0] == FAT_FREE) {
         FAT[0] = MY_EOF;
-
+        
         FileEntry root;
         strcpy(root.name, "/");
         root.first_block = 0;
@@ -595,6 +611,8 @@ int change_dir(const char *dirname) {
 }
 
 void ls_dir() {
+    printf("Listing directory contents for directory '%s':\n", get_current_dir_name());
+
     int current_block = current_dir_index;
 
     while (current_block != MY_EOF) {
