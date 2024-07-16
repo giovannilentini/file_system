@@ -85,7 +85,6 @@ void cd(int argc, char* argv[MAX_ARGC + 1]) {
 }
 
 void write(int argc, char* argv[MAX_ARGC + 1]) {
-
     if (argc != 2) {
         printf("Error: wrong number of parameters.\n");
         printf("Usage: write <filename>\n");
@@ -93,25 +92,51 @@ void write(int argc, char* argv[MAX_ARGC + 1]) {
     }
 
     char *filename = argv[1];
+    FileEntry* file_entry = open_file_entry(filename);
+    
+    if (!file_entry) {
+        printf("Error: file not found.\n");
+        return;
+    }
 
-    if (open_file_entry(filename)->is_directory) {
+    if (file_entry->is_directory) {
         printf("Error: cannot write a directory.\n");
         return;
     }
 
     int position;
-    
     printf("Enter starting point: ");
     scanf("%d", &position);
     getchar();
 
     if (seek(filename, position) < 0) return;
-    
+
     printf("Enter text: ");
-    char* str = calloc(2048, sizeof(char));
-    fgets(str, 2048, stdin);
-    //str[strlen(str) - 1] = 0;
-    write_file(filename, str, strlen(str)-1);
+    
+    int size = 0;
+    int capacity = 1024;
+    char* str = malloc(capacity);
+    if (!str) {
+        printf("Error: memory allocation failed.\n");
+        return;
+    }
+
+    int c;
+    while ((c = getchar()) != '\n' && c != EOF) {
+        if (size + 1 >= capacity) {
+            capacity *= 2;
+            str = realloc(str, capacity);
+            if (!str) {
+                printf("Error: memory allocation failed.\n");
+                return;
+            }
+        }
+        str[size++] = c;
+    }
+    str[size] = '\0';
+
+    write_file(filename, str, size);
+    free(str);
 }
 
 void read(int argc, char* argv[MAX_ARGC + 1]) {
@@ -123,8 +148,9 @@ void read(int argc, char* argv[MAX_ARGC + 1]) {
     }
 
     char *filename = argv[1];
+    FileEntry *file = open_file_entry(filename);
 
-    if (open_file_entry(filename)->is_directory) {
+    if (file->is_directory) {
         printf("Error: cannot read a directory.\n");
         return;
     }
@@ -137,8 +163,8 @@ void read(int argc, char* argv[MAX_ARGC + 1]) {
 
     if (seek(filename, position) < 0) return;
  
-    char* str = calloc(2048, sizeof(char));
-    read_file(filename, str, 2048);
+    char* str = calloc(file->size, sizeof(char));
+    read_file(filename, str, file->size);
     printf("%s\n", str);
     
 }
